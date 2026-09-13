@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Calculadora Científica</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#202225">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calculadora">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<style>
+  :root{
+    --case: #202225;
+    --case-edge: #17181a;
+    --panel: #26292d;
+    --screen-bg: #0c1210;
+    --screen-fg: #7ee787;
+    --screen-fg-dim: #4c8a57;
+    --key-num: #35393e;
+    --key-num-hi: #40454b;
+    --key-fn: #2f4a4d;
+    --key-fn-hi: #3a5c5f;
+    --key-op: #5a4330;
+    --key-op-hi: #6d5239;
+    --key-eq: #3f6b4a;
+    --key-eq-hi: #4d8059;
+    --text: #e7e9ec;
+    --text-dim: #9aa0a6;
+    --accent: #7ee787;
+    --danger: #b05c4a;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{
+    width:100%;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+  }
+  html,body{
+    margin:0; padding:0; min-height:100vh; width:100%;
+    background: linear-gradient(180deg,#111214,#1a1b1d);
+    color:var(--text);
+    font-family:var(--sans);
+    display:flex; justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .device{
+    width:100%;
+    max-width:460px;
+    background:var(--case);
+    border:1px solid var(--case-edge);
+    border-radius:18px;
+    margin:14px;
+    padding:14px 14px 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  @media (max-width:400px){
+    .device{ margin:8px; padding:10px 10px 16px; }
+  }
+  .brand{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding:2px 4px 12px;
+  }
+  .brand-name{
+    font-size:13px; letter-spacing:0.08em; color:var(--text-dim); font-weight:600;
+  }
+  .brand-model{
+    font-family:var(--mono); font-size:11px; color:var(--screen-fg-dim);
+  }
+  .tabs{
+    display:flex; gap:6px; margin-bottom:10px; background:var(--case-edge);
+    padding:4px; border-radius:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex:0 0 auto; padding:9px 13px; border:none; border-radius:7px; cursor:pointer;
+    background:transparent; color:var(--text-dim); font-family:var(--sans);
+    font-size:12.5px; font-weight:600; white-space:nowrap; transition:background .15s, color .15s;
+  }
+  .tab.active{ background:var(--panel); color:var(--accent); }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  /* ---- Calculator screen ---- */
+  .screen{
+    background:var(--screen-bg);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:12px;
+    border:1px solid #000;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+  }
+  .mode-row{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:8px;
+  }
+  .mode-badges{ display:flex; gap:8px; }
+  .badge{
+    font-family:var(--mono); font-size:10.5px; padding:4px 9px; border-radius:4px;
+    border:1px solid var(--screen-fg-dim); color:var(--screen-fg-dim);
+    background:none; cursor:pointer;
+  }
+  .badge.on{ color:var(--screen-fg); border-color:var(--screen-fg); background:rgba(126,231,135,0.1); }
+  .mini-btn{
+    font-family:var(--mono); font-size:11px; background:none; border:1px solid var(--screen-fg-dim);
+    color:var(--screen-fg-dim); border-radius:5px; padding:3px 8px; cursor:pointer;
+  }
+  .mini-btn:active, .mini-btn.on{ color:var(--screen-fg); border-color:var(--screen-fg); }
+  .expr-input{
+    width:100%; background:transparent; border:none; outline:none;
+    font-family:var(--mono); font-size:17px; color:var(--screen-fg);
+    padding:6px 0 2px; caret-color:var(--screen-fg);
+  }
+  .expr-input::placeholder{ color:var(--screen-fg-dim); }
+  .result-line{
+    font-family:var(--mono); font-size:26px; color:var(--screen-fg);
+    text-align:right; min-height:32px; overflow-x:auto; white-space:nowrap;
+    padding-top:2px;
+  }
+  .error-line{ color:var(--danger) !important; font-size:14px !important; }
+  .dms-line{
+    font-family:var(--mono); font-size:13px; color:var(--screen-fg-dim);
+    text-align:right; min-height:16px;
+  }
+
+  /* ---- Keypad ---- */
+  .keypad{ display:flex; flex-direction:column; gap:6px; }
+  .krow{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+  .krow.main{ grid-template-columns:repeat(4,1fr); }
+  .krow.six{ grid-template-columns:repeat(6,1fr); }
+  key, .key{
+    display:flex; align-items:center; justify-content:center;
+    height:44px; border-radius:8px; border:none; cursor:pointer;
+    font-family:var(--mono); font-size:15px; color:var(--text);
+    background:var(--key-num);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+    user-select:none;
+    transition: transform .05s;
+  }
+  .key:active{ transform:translateY(2px); box-shadow:none; }
+  .key.fn{ background:var(--key-fn); font-size:13px; }
+  .key.fn:active{ background:var(--key-fn-hi); }
+  .key.num:active{ background:var(--key-num-hi); }
+  .key.op{ background:var(--key-op); }
+  .key.op:active{ background:var(--key-op-hi); }
+  .key.eq{ background:var(--key-eq); font-weight:700; }
+  .key.eq:active{ background:var(--key-eq-hi); }
+  .key.wide{ grid-column: span 2; }
+  .key.active-toggle{ outline:2px solid var(--accent); }
+
+  /* ---- Stats panel ---- */
+  .stats-intro{ font-size:13px; color:var(--text-dim); margin:2px 4px 10px; line-height:1.5; }
+  .add-one-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .add-one-row .field{ flex:1; }
+  .add-btn{
+    padding:0 16px; border:none; border-radius:8px; background:var(--key-fn);
+    color:var(--text); font-family:var(--sans); font-weight:600; font-size:13px; cursor:pointer;
+  }
+  .add-btn:active{ background:var(--key-fn-hi); }
+  .chips{
+    display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; min-height:0;
+  }
+  .chips:empty{ margin-bottom:0; }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background:var(--panel); border-radius:14px; padding:5px 6px 5px 11px;
+    font-family:var(--mono); font-size:12.5px; color:var(--accent);
+  }
+  .chip button{
+    border:none; background:rgba(255,255,255,0.08); color:var(--text-dim);
+    width:18px; height:18px; border-radius:50%; font-size:12px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .chip button:active{ background:rgba(255,255,255,0.18); }
+  textarea#statsInput{
+    width:100%; min-height:78px; resize:vertical;
+    background:var(--screen-bg); color:var(--screen-fg); border:1px solid #000;
+    border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:14px;
+    outline:none; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+  }
+  textarea#statsInput::placeholder{ color:var(--screen-fg-dim); }
+  .action-btn{
+    width:100%; margin-top:10px; padding:12px; border:none; border-radius:9px;
+    background:var(--key-eq); color:var(--text); font-family:var(--sans);
+    font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .action-btn:active{ background:var(--key-eq-hi); }
+  .stats-grid{
+    margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  }
+  .stat-cell{
+    background:var(--panel); border-radius:8px; padding:9px 11px;
+  }
+  .stat-cell .label{ font-size:11px; color:var(--text-dim); margin-bottom:3px; }
+  .stat-cell .value{ font-family:var(--mono); font-size:15px; color:var(--accent); word-break:break-word; }
+  .stat-note{ font-size:12px; color:var(--text-dim); margin-top:10px; padding:0 4px; }
+
+  /* ---- Graph panel ---- */
+  .graph-controls{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+  .graph-row{ display:flex; gap:8px; }
+  .graph-row > div{ flex:1; }
+  .field-label{ font-size:11px; color:var(--text-dim); margin-bottom:4px; display:block; }
+  input.field{
+    width:100%; background:var(--screen-bg); color:var(--screen-fg); border:1px solid #000;
+    border-radius:8px; padding:9px 10px; font-family:var(--mono); font-size:14px; outline:none;
+  }
+  #graphCanvas{
+    width:100%; height:260px; display:block; border-radius:10px; background:var(--screen-bg);
+    border:1px solid #000; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+  }
+  .graph-error{ color:var(--danger); font-size:13px; margin-top:8px; min-height:16px; }
+  .install-note{
+    margin-top:16px; padding:10px 12px; border-radius:9px; background:var(--panel);
+    font-size:12px; color:var(--text-dim); line-height:1.5;
+  }
+
+  /* ---- Conversion panel ---- */
+  select.field{
+    width:100%; background:var(--screen-bg); color:var(--screen-fg); border:1px solid #000;
+    border-radius:8px; padding:9px 10px; font-family:var(--mono); font-size:13px; outline:none;
+    appearance:none; -webkit-appearance:none;
+  }
+  .convert-grid{
+    display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:end; margin-top:12px;
+  }
+  .swap-btn{
+    height:38px; width:38px; border:none; border-radius:50%; background:var(--key-fn);
+    color:var(--text); font-size:16px; cursor:pointer; margin-bottom:1px;
+  }
+  .swap-btn:active{ background:var(--key-fn-hi); }
+  .conv-result{
+    margin-top:8px; background:var(--screen-bg); border:1px solid #000; border-radius:8px;
+    padding:9px 10px; font-family:var(--mono); font-size:15px; color:var(--accent);
+    min-height:38px; display:flex; align-items:center; word-break:break-word;
+  }
+
+  /* ---- Chemistry panel ---- */
+  .subtabs{ display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .subtabs::-webkit-scrollbar{ display:none; }
+  .subtab{
+    flex:0 0 auto; padding:8px 10px; border:none; border-radius:7px; cursor:pointer;
+    background:var(--panel); color:var(--text-dim); font-family:var(--sans);
+    font-size:11.5px; font-weight:600; white-space:nowrap;
+  }
+  .subtab.active{ background:var(--key-fn); color:var(--text); }
+  .subpanel{ display:none; }
+  .subpanel.active{ display:block; }
+  .chem-result{
+    margin-top:12px; background:var(--screen-bg); border:1px solid #000; border-radius:10px;
+    padding:12px; font-family:var(--mono); font-size:14px; color:var(--accent);
+    min-height:20px; line-height:1.6; word-break:break-word; white-space:pre-wrap;
+  }
+  .chem-result .chem-error{ color:var(--danger); font-family:var(--sans); }
+  .chem-table{ width:100%; border-collapse:collapse; margin-top:6px; font-size:13px; }
+  .chem-table td{ padding:3px 6px 3px 0; color:var(--text); }
+  .chem-table td:last-child{ color:var(--accent); text-align:right; }
+
+  /* ---- Math tools panel ---- */
+  .tri-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:4px;
+  }
+  .tri-grid.three{ margin-bottom:4px; }
+  .vec-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .vec-inputs{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:4px; }
+  .vec-inputs .vec-z.hidden{ display:none; }
+  .dms-convert-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:start; }
+  .divider{ border:none; border-top:1px solid var(--case-edge); margin:16px 0; }
+  .angle-add-row{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px; }
+  .angle-add-row .field{ flex:1 1 60px; min-width:60px; }
+  .angle-add-row .add-btn{ flex:1 1 100%; }
+  .sign-btn{
+    width:34px; height:38px; border:none; border-radius:8px; background:var(--panel);
+    color:var(--text-dim); font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .sign-btn.on{ background:var(--key-fn); color:var(--text); }
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="brand">
+    <span class="brand-name">CALCULADORA CIENTÍFICA</span>
+    <span class="brand-model">v1 · sin conexión</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="calc">Calculadora</button>
+    <button class="tab" data-tab="stats">Estadística</button>
+    <button class="tab" data-tab="graph">Gráfica</button>
+    <button class="tab" data-tab="convert">Conversión</button>
+    <button class="tab" data-tab="chem">Química</button>
+    <button class="tab" data-tab="math">Matemáticas</button>
+  </div>
+
+  <!-- ===================== CALCULATOR ===================== -->
+  <section class="panel active" id="panel-calc">
+    <div class="screen">
+      <div class="mode-row">
+        <div class="mode-badges">
+          <button class="badge on" id="badgeDeg">DEG</button>
+          <button class="badge" id="badgeRad">RAD</button>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="mini-btn" id="btnInvToggle">INV</button>
+        </div>
+      </div>
+      <input class="expr-input" id="exprInput" type="text" inputmode="none" placeholder="0" autocomplete="off" spellcheck="false">
+      <div class="result-line" id="resultLine">&nbsp;</div>
+      <div class="dms-line" id="dmsLine"></div>
+    </div>
+
+    <div class="keypad">
+      <div class="krow">
+        <button class="key fn" data-fn="sin">sin</button>
+        <button class="key fn" data-fn="cos">cos</button>
+        <button class="key fn" data-fn="tan">tan</button>
+        <button class="key fn" data-ins="^2">x²</button>
+        <button class="key fn" data-ins="^">xʸ</button>
+      </div>
+      <div class="krow">
+        <button class="key fn" data-fn="sqrt">√</button>
+        <button class="key fn" data-fn="root">ⁿ√</button>
+        <button class="key fn" data-fn="log">log</button>
+        <button class="key fn" data-fn="ln">ln</button>
+        <button class="key fn" data-ins="!">n!</button>
+      </div>
+      <div class="krow six">
+        <button class="key fn" data-ins="pi">π</button>
+        <button class="key fn" data-ins="e">e</button>
+        <button class="key op" data-ins="(">(</button>
+        <button class="key op" data-ins=")">)</button>
+        <button class="key op" data-ins="%">%</button>
+        <button class="key fn" id="btnAns">Ans</button>
+      </div>
+      <div class="krow main">
+        <button class="key num" data-ins="7">7</button>
+        <button class="key num" data-ins="8">8</button>
+        <button class="key num" data-ins="9">9</button>
+        <button class="key op" id="btnBack">⌫</button>
+      </div>
+      <div class="krow main">
+        <button class="key num" data-ins="4">4</button>
+        <button class="key num" data-ins="5">5</button>
+        <button class="key num" data-ins="6">6</button>
+        <button class="key op" data-ins="/">÷</button>
+      </div>
+      <div class="krow main">
+        <button class="key num" data-ins="1">1</button>
+        <button class="key num" data-ins="2">2</button>
+        <button class="key num" data-ins="3">3</button>
+        <button class="key op" data-ins="*">×</button>
+      </div>
+      <div class="krow main">
+        <button class="key num" data-ins="0">0</button>
+        <button class="key num" data-ins=".">.</button>
+        <button class="key op" data-ins="-">−</button>
+        <button class="key op" data-ins="+">+</button>
+      </div>
+      <div class="krow main">
+        <button class="key op wide" id="btnClear">C</button>
+        <button class="key eq wide" id="btnEquals">=</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STATISTICS ===================== -->
+  <section class="panel" id="panel-stats">
+    <p class="stats-intro">Ingresa tus datos de dos formas: agrégalos uno por uno, o pega/escribe una lista completa separada por comas, espacios o saltos de línea.</p>
+
+    <div class="add-one-row">
+      <input class="field" id="datoInput" type="number" inputmode="decimal" placeholder="Escribe un número">
+      <button class="add-btn" id="btnAddDato">Agregar</button>
+    </div>
+    <div class="chips" id="statsChips"></div>
+
+    <textarea id="statsInput" placeholder="Ej: 4, 8, 15, 16, 23, 42"></textarea>
+    <button class="action-btn" id="btnCalcStats">Calcular estadísticas</button>
+    <div class="stats-grid" id="statsGrid"></div>
+    <p class="stat-note" id="statsNote"></p>
+  </section>
+
+  <!-- ===================== GRAPH ===================== -->
+  <section class="panel" id="panel-graph">
+    <div class="graph-controls">
+      <div>
+        <span class="field-label">f(x) =</span>
+        <input class="field" id="fxInput" type="text" inputmode="none" value="sin(x)" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="graph-row">
+        <div>
+          <span class="field-label">x mínimo</span>
+          <input class="field" id="xminInput" type="number" value="-10">
+        </div>
+        <div>
+          <span class="field-label">x máximo</span>
+          <input class="field" id="xmaxInput" type="number" value="10">
+        </div>
+      </div>
+      <button class="action-btn" id="btnPlot">Graficar</button>
+    </div>
+    <canvas id="graphCanvas"></canvas>
+    <p class="graph-error" id="graphError"></p>
+    <p class="install-note">
+      Esta página funciona sin conexión: guárdala en tu equipo y ábrela con el navegador,
+      o en el celular usa "Agregar a pantalla de inicio" para tener un acceso directo como una app.
+    </p>
+  </section>
+
+  <!-- ===================== UNIT CONVERSION ===================== -->
+  <section class="panel" id="panel-convert">
+    <div>
+      <span class="field-label">Categoría</span>
+      <select class="field" id="convCategory"></select>
+    </div>
+    <div class="convert-grid">
+      <div>
+        <span class="field-label">De</span>
+        <select class="field" id="convFrom"></select>
+        <input class="field" id="convValue" type="number" value="1" style="margin-top:8px;">
+      </div>
+      <button class="swap-btn" id="convSwap" title="Intercambiar" aria-label="Intercambiar unidades">⇅</button>
+      <div>
+        <span class="field-label">A</span>
+        <select class="field" id="convTo"></select>
+        <div class="conv-result" id="convResult">—</div>
+      </div>
+    </div>
+    <p class="stat-note" id="convNote"></p>
+  </section>
+
+  <!-- ===================== CHEMISTRY ===================== -->
+  <section class="panel" id="panel-chem">
+    <div class="subtabs">
+      <button class="subtab active" data-subtab="molar">Masa molar</button>
+      <button class="subtab" data-subtab="econfig">Config. electrónica</button>
+      <button class="subtab" data-subtab="balance">Balanceo</button>
+    </div>
+
+    <div class="subpanel active" id="subpanel-molar">
+      <span class="field-label">Fórmula química</span>
+      <input class="field" id="molarInput" type="text" placeholder="Ej: Ca(OH)2" autocomplete="off" spellcheck="false" value="H2O">
+      <button class="action-btn" id="btnMolar">Calcular masa molar</button>
+      <div class="chem-result" id="molarResult"></div>
+    </div>
+
+    <div class="subpanel" id="subpanel-econfig">
+      <span class="field-label">Elemento (símbolo o número atómico)</span>
+      <input class="field" id="econfigInput" type="text" placeholder="Ej: Fe  ó  26" autocomplete="off" spellcheck="false" value="Fe">
+      <button class="action-btn" id="btnEconfig">Obtener configuración</button>
+      <div class="chem-result" id="econfigResult"></div>
+    </div>
+
+    <div class="subpanel" id="subpanel-balance">
+      <span class="field-label">Ecuación sin balancear (usa "-&gt;" y "+")</span>
+      <input class="field" id="balanceInput" type="text" placeholder="Ej: Fe + O2 -> Fe2O3" autocomplete="off" spellcheck="false" value="Fe + O2 -> Fe2O3">
+      <button class="action-btn" id="btnBalance">Balancear ecuación</button>
+      <div class="chem-result" id="balanceResult"></div>
+    </div>
+  </section>
+
+  <!-- ===================== MATH TOOLS ===================== -->
+  <section class="panel" id="panel-math">
+    <div class="subtabs">
+      <button class="subtab active" data-mathsubtab="triangle">Triángulos</button>
+      <button class="subtab" data-mathsubtab="quadratic">Ec. 2° grado</button>
+      <button class="subtab" data-mathsubtab="vectors">Vectores</button>
+      <button class="subtab" data-mathsubtab="angles">Ángulos (DMS)</button>
+    </div>
+
+    <div class="subpanel active" id="mathsubpanel-triangle">
+      <p class="stats-intro">Llena los lados y/o ángulos que conozcas (deja vacío lo que no sepas). Necesitas al menos 3 datos, con mínimo 1 lado. Los ángulos van en grados.</p>
+      <div class="tri-grid">
+        <div><span class="field-label">Lado a</span><input class="field" id="triA" type="number" placeholder="a"></div>
+        <div><span class="field-label">Lado b</span><input class="field" id="triB" type="number" placeholder="b"></div>
+        <div><span class="field-label">Lado c</span><input class="field" id="triC" type="number" placeholder="c"></div>
+        <div><span class="field-label">Ángulo A (°)</span><input class="field" id="triAngA" type="number" placeholder="A"></div>
+        <div><span class="field-label">Ángulo B (°)</span><input class="field" id="triAngB" type="number" placeholder="B"></div>
+        <div><span class="field-label">Ángulo C (°)</span><input class="field" id="triAngC" type="number" placeholder="C"></div>
+      </div>
+      <button class="action-btn" id="btnTriangle">Resolver triángulo</button>
+      <div class="chem-result" id="triangleResult"></div>
+    </div>
+
+    <div class="subpanel" id="mathsubpanel-quadratic">
+      <p class="stats-intro">Resuelve ax² + bx + c = 0</p>
+      <div class="tri-grid three">
+        <div><span class="field-label">a</span><input class="field" id="quadA" type="number" value="1"></div>
+        <div><span class="field-label">b</span><input class="field" id="quadB" type="number" value="0"></div>
+        <div><span class="field-label">c</span><input class="field" id="quadC" type="number" value="0"></div>
+      </div>
+      <button class="action-btn" id="btnQuadratic">Resolver ecuación</button>
+      <div class="chem-result" id="quadraticResult"></div>
+    </div>
+
+    <div class="subpanel" id="mathsubpanel-vectors">
+      <div class="mode-row" style="margin:2px 4px 10px;">
+        <div class="mode-badges">
+          <button class="badge on" id="vecDim2">2D</button>
+          <button class="badge" id="vecDim3">3D</button>
+        </div>
+      </div>
+      <div class="vec-grid">
+        <div>
+          <span class="field-label">Vector A</span>
+          <div class="vec-inputs">
+            <input class="field" id="vecAx" type="number" placeholder="Ax" value="1">
+            <input class="field" id="vecAy" type="number" placeholder="Ay" value="2">
+            <input class="field vec-z" id="vecAz" type="number" placeholder="Az" value="3">
+          </div>
+        </div>
+        <div>
+          <span class="field-label">Vector B</span>
+          <div class="vec-inputs">
+            <input class="field" id="vecBx" type="number" placeholder="Bx" value="4">
+            <input class="field" id="vecBy" type="number" placeholder="By" value="5">
+            <input class="field vec-z" id="vecBz" type="number" placeholder="Bz" value="6">
+          </div>
+        </div>
+      </div>
+      <span class="field-label">Operación</span>
+      <select class="field" id="vecOp">
+        <option value="add">A + B (suma)</option>
+        <option value="sub">A − B (resta)</option>
+        <option value="dot">A · B (producto punto)</option>
+        <option value="cross">A × B (producto cruz)</option>
+        <option value="magA">|A| (magnitud de A)</option>
+        <option value="magB">|B| (magnitud de B)</option>
+        <option value="angle">Ángulo entre A y B</option>
+        <option value="unitA">Vector unitario de A</option>
+        <option value="unitB">Vector unitario de B</option>
+      </select>
+      <button class="action-btn" id="btnVector">Calcular</button>
+      <div class="chem-result" id="vectorResult"></div>
+    </div>
+
+    <div class="subpanel" id="mathsubpanel-angles">
+      <p class="stats-intro">Convierte grados decimales ⇄ GMS, y suma/resta una lista de ángulos (útil para cierres de polígonos).</p>
+
+      <div class="dms-convert-grid">
+        <div>
+          <span class="field-label">Grados decimales</span>
+          <input class="field" id="dmsDecInput" type="number" placeholder="Ej: 45.5042">
+          <button class="add-btn" id="btnDecToDms" style="margin-top:6px; width:100%;">→ Convertir a G° M' S"</button>
+        </div>
+        <div>
+          <span class="field-label">Grados / Minutos / Segundos</span>
+          <div class="vec-inputs">
+            <input class="field" id="dmsD" type="number" placeholder="G°">
+            <input class="field" id="dmsM" type="number" placeholder="M'">
+            <input class="field" id="dmsS" type="number" placeholder="S&quot;">
+          </div>
+          <button class="add-btn" id="btnDmsToDec" style="margin-top:6px; width:100%;">→ Convertir a decimal</button>
+        </div>
+      </div>
+      <div class="chem-result" id="dmsConvertResult"></div>
+
+      <hr class="divider">
+
+      <p class="stats-intro">Agrega cada ángulo medido (con su signo) a la lista. El total se recalcula automáticamente.</p>
+      <div class="angle-add-row">
+        <button class="sign-btn on" id="angleSignPlus">+</button>
+        <button class="sign-btn" id="angleSignMinus">−</button>
+        <input class="field" id="angleD" type="number" placeholder="G°">
+        <input class="field" id="angleM" type="number" placeholder="M'">
+        <input class="field" id="angleS" type="number" placeholder="S&quot;">
+        <button class="add-btn" id="btnAddAngle">Agregar</button>
+      </div>
+      <div class="chips" id="angleChips"></div>
+      <div class="chem-result" id="angleSumResult"></div>
+
+      <hr class="divider">
+
+      <p class="stats-intro">Cierre de polígono: compara la suma de los ángulos de arriba contra el total teórico (n−2)×180°.</p>
+      <span class="field-label">Número de lados del polígono (n)</span>
+      <input class="field" id="polygonN" type="number" placeholder="Ej: 5">
+      <button class="action-btn" id="btnPolygonClosure">Calcular cierre</button>
+      <div class="chem-result" id="polygonResult"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== MATH ENGINE ===================== */
+  function tokenize(expr){
+    const tokens = [];
+    let i = 0;
+    const s = expr.replace(/\s+/g,'');
+    const funcs = ['asin','acos','atan','sin','cos','tan','sqrt','root','log','ln','abs','exp'];
+    while(i < s.length){
+      const c = s[i];
+      if(/[0-9.]/.test(c)){
+        let num='';
+        while(i<s.length && /[0-9.]/.test(s[i])){ num+=s[i]; i++; }
+        tokens.push({type:'num', value: parseFloat(num)});
+        continue;
+      }
+      let matched = null;
+      for(const f of funcs){ if(s.startsWith(f,i)){ matched=f; break; } }
+      if(matched){ tokens.push({type:'func', value: matched}); i += matched.length; continue; }
+      if(s.startsWith('pi', i)){ tokens.push({type:'num', value: Math.PI}); i += 2; continue; }
+      if(c === 'e'){ tokens.push({type:'num', value: Math.E}); i++; continue; }
+      if(c === 'x'){ tokens.push({type:'var'}); i++; continue; }
+      if('+-*/^%(),!'.includes(c)){ tokens.push({type:'op', value:c}); i++; continue; }
+      throw new Error('Carácter no reconocido: "' + c + '"');
+    }
+    return tokens;
+  }
+
+  function parseTokens(tokens){
+    let pos = 0;
+    const peek = () => tokens[pos];
+    const next = () => tokens[pos++];
+
+    function parseExpr(){ return parseAdd(); }
+    function parseAdd(){
+      let node = parseMul();
+      while(peek() && peek().type==='op' && (peek().value==='+'||peek().value==='-')){
+        const op = next().value;
+        node = {type:'bin', op, left:node, right:parseMul()};
+      }
+      return node;
+    }
+    function parseMul(){
+      let node = parseUnary();
+      while(peek() && peek().type==='op' && (peek().value==='*'||peek().value==='/'||peek().value==='%')){
+        const op = next().value;
+        node = {type:'bin', op, left:node, right:parseUnary()};
+      }
+      return node;
+    }
+    function parseUnary(){
+      if(peek() && peek().type==='op' && peek().value==='-'){ next(); return {type:'neg', value:parseUnary()}; }
+      if(peek() && peek().type==='op' && peek().value==='+'){ next(); return parseUnary(); }
+      return parsePow();
+    }
+    function parsePow(){
+      let node = parsePostfix();
+      if(peek() && peek().type==='op' && peek().value==='^'){
+        next();
+        node = {type:'bin', op:'^', left:node, right:parseUnary()};
+      }
+      return node;
+    }
+    function parsePostfix(){
+      let node = parseAtom();
+      while(peek() && peek().type==='op' && peek().value==='!'){ next(); node = {type:'fact', value:node}; }
+      return node;
+    }
+    function parseAtom(){
+      const t = peek();
+      if(!t) throw new Error('Expresión incompleta');
+      if(t.type==='num'){ next(); return {type:'num', value:t.value}; }
+      if(t.type==='var'){ next(); return {type:'var'}; }
+      if(t.type==='func'){
+        next();
+        if(!peek() || peek().value!=='(') throw new Error('Falta "(" después de ' + t.value);
+        next();
+        const args = [parseExpr()];
+        while(peek() && peek().value===','){ next(); args.push(parseExpr()); }
+        if(!peek() || peek().value!==')') throw new Error('Falta ")"');
+        next();
+        return {type:'call', name:t.value, args};
+      }
+      if(t.type==='op' && t.value==='('){
+        next();
+        const node = parseExpr();
+        if(!peek() || peek().value!==')') throw new Error('Falta ")"');
+        next();
+        return node;
+      }
+      throw new Error('Token inesperado');
+    }
+    const result = parseExpr();
+    if(pos < tokens.length) throw new Error('Expresión mal formada');
+    return result;
+  }
+
+  function factorial(n){
+    if(n<0 || !Number.isInteger(n)) return NaN;
+    let r=1; for(let i=2;i<=n;i++) r*=i; return r;
+  }
+
+  function evaluateAst(node, x, angleMode){
+    const toRad = v => angleMode==='DEG' ? v*Math.PI/180 : v;
+    const fromRad = v => angleMode==='DEG' ? v*180/Math.PI : v;
+    switch(node.type){
+      case 'num': return node.value;
+      case 'var': return x;
+      case 'neg': return -evaluateAst(node.value, x, angleMode);
+      case 'fact': return factorial(evaluateAst(node.value, x, angleMode));
+      case 'bin': {
+        const l = evaluateAst(node.left, x, angleMode);
+        const r = evaluateAst(node.right, x, angleMode);
+        switch(node.op){
+          case '+': return l+r;
+          case '-': return l-r;
+          case '*': return l*r;
+          case '/': return l/r;
+          case '%': return l%r;
+          case '^': return Math.pow(l,r);
+        }
+        break;
+      }
+      case 'call': {
+        const a = node.args.map(n => evaluateAst(n, x, angleMode));
+        switch(node.name){
+          case 'sin': return Math.sin(toRad(a[0]));
+          case 'cos': return Math.cos(toRad(a[0]));
+          case 'tan': return Math.tan(toRad(a[0]));
+          case 'asin': return fromRad(Math.asin(a[0]));
+          case 'acos': return fromRad(Math.acos(a[0]));
+          case 'atan': return fromRad(Math.atan(a[0]));
+          case 'sqrt': return Math.sqrt(a[0]);
+          case 'root': return Math.pow(a[1], 1/a[0]);
+          case 'log': return Math.log10(a[0]);
+          case 'ln': return Math.log(a[0]);
+          case 'abs': return Math.abs(a[0]);
+          case 'exp': return Math.exp(a[0]);
+        }
+        break;
+      }
+    }
+    throw new Error('Nodo no soportado');
+  }
+
+  function evalExpression(expr, angleMode, x){
+    if(!expr || !expr.trim()) throw new Error('Expresión vacía');
+    const tokens = tokenize(expr);
+    const ast = parseTokens(tokens);
+    return evaluateAst(ast, x, angleMode);
+  }
+
+  function formatNumber(n){
+    if(typeof n !== 'number' || isNaN(n)) return 'Error';
+    if(!isFinite(n)) return n > 0 ? '∞' : '-∞';
+    if(Math.abs(n) > 0 && (Math.abs(n) < 1e-10)) n = 0;
+    const rounded = Math.round(n * 1e10) / 1e10;
+    return rounded.toString();
+  }
+
+  function toDMS(decimalDegrees){
+    const sign = decimalDegrees < 0 ? '-' : '';
+    let abs = Math.abs(decimalDegrees);
+    let deg = Math.floor(abs);
+    let remainder = (abs - deg) * 60;
+    let min = Math.floor(remainder);
+    let sec = (remainder - min) * 60;
+    sec = Math.round(sec * 100) / 100;
+    if(sec >= 60){ sec -= 60; min += 1; }
+    if(min >= 60){ min -= 60; deg += 1; }
+    return sign + deg + '\u00B0 ' + min + "' " + sec.toFixed(2) + '"';
+  }
+  const arcFuncPattern = /a(sin|cos|tan)\(/;
+
+  /* ===================== TABS ===================== */
+  const tabs = document.querySelectorAll('.tab');
+  const panels = {
+    calc: document.getElementById('panel-calc'),
+    stats: document.getElementById('panel-stats'),
+    graph: document.getElementById('panel-graph'),
+    convert: document.getElementById('panel-convert'),
+    chem: document.getElementById('panel-chem'),
+    math: document.getElementById('panel-math')
+  };
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      Object.values(panels).forEach(p => p.classList.remove('active'));
+      panels[tab.dataset.tab].classList.add('active');
+      if(tab.dataset.tab === 'graph') requestAnimationFrame(drawGraphIfPossible);
+    });
+  });
+
+  /* ===================== CALCULATOR UI ===================== */
+  const exprInput = document.getElementById('exprInput');
+  const resultLine = document.getElementById('resultLine');
+  const dmsLine = document.getElementById('dmsLine');
+  let angleMode = 'DEG';
+  let invMode = false;
+  let lastResult = null;
+  let justCalculated = false;
+
+  const badgeDeg = document.getElementById('badgeDeg');
+  const badgeRad = document.getElementById('badgeRad');
+  function setAngleMode(mode){
+    angleMode = mode;
+    badgeDeg.classList.toggle('on', angleMode === 'DEG');
+    badgeRad.classList.toggle('on', angleMode === 'RAD');
+  }
+  badgeDeg.addEventListener('click', () => setAngleMode('DEG'));
+  badgeRad.addEventListener('click', () => setAngleMode('RAD'));
+
+  const invBtn = document.getElementById('btnInvToggle');
+  const trigMap = {
+    sin:'asin', cos:'acos', tan:'atan',
+    asin:'sin', acos:'cos', atan:'tan',
+    log:'exp', ln:'exp'
+  };
+  const fnButtons = document.querySelectorAll('[data-fn]');
+  invBtn.addEventListener('click', () => {
+    invMode = !invMode;
+    invBtn.classList.toggle('on', invMode);
+    fnButtons.forEach(btn => {
+      const current = btn.dataset.fn;
+      if(trigMap[current]){
+        btn.dataset.fn = trigMap[current];
+        btn.textContent = trigMap[current] === 'exp' ? (current==='log' ? '10ˣ' : 'eˣ') : trigMap[current];
+      }
+    });
+  });
+
+  function insertAtCursor(input, text){
+    const start = input.selectionStart ?? input.value.length;
+    const end = input.selectionEnd ?? input.value.length;
+    input.value = input.value.slice(0, start) + text + input.value.slice(end);
+    const newPos = start + text.length;
+    input.focus();
+    input.setSelectionRange(newPos, newPos);
+  }
+
+  const continueOps = ['+','-','*','/','^','%','!'];
+
+  document.querySelectorAll('.key[data-ins]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const insText = btn.dataset.ins;
+      if(justCalculated){
+        if(continueOps.includes(insText)){
+          exprInput.value = formatNumber(lastResult);
+          exprInput.setSelectionRange(exprInput.value.length, exprInput.value.length);
+        } else {
+          exprInput.value = '';
+        }
+        justCalculated = false;
+      }
+      insertAtCursor(exprInput, insText);
+    });
+  });
+
+  document.querySelectorAll('.key[data-fn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fnName = btn.dataset.fn;
+      let prefix, singleArgWrap = true;
+      if(fnName === 'exp'){
+        const isTen = btn.textContent === '10ˣ';
+        prefix = isTen ? '10^(' : 'exp(';
+      } else if(fnName === 'root'){
+        prefix = 'root(';
+        singleArgWrap = false;
+      } else {
+        prefix = fnName + '(';
+      }
+
+      if(justCalculated && singleArgWrap){
+        // wrap the last result directly: e.g. acos(3.5)
+        exprInput.value = prefix + formatNumber(lastResult) + ')';
+        exprInput.setSelectionRange(exprInput.value.length, exprInput.value.length);
+        justCalculated = false;
+        exprInput.focus();
+        return;
+      }
+      if(justCalculated){ exprInput.value = ''; justCalculated = false; }
+      insertAtCursor(exprInput, prefix);
+    });
+  });
+
+  document.getElementById('btnAns').addEventListener('click', () => {
+    if(lastResult === null) return;
+    if(justCalculated){ exprInput.value = ''; justCalculated = false; }
+    insertAtCursor(exprInput, formatNumber(lastResult));
+  });
+
+  document.getElementById('btnBack').addEventListener('click', () => {
+    justCalculated = false;
+    const start = exprInput.selectionStart, end = exprInput.selectionEnd;
+    if(start === end && start > 0){
+      exprInput.value = exprInput.value.slice(0, start-1) + exprInput.value.slice(start);
+      exprInput.setSelectionRange(start-1, start-1);
+    } else {
+      exprInput.value = exprInput.value.slice(0,start) + exprInput.value.slice(end);
+      exprInput.setSelectionRange(start, start);
+    }
+    exprInput.focus();
+  });
+
+  document.getElementById('btnClear').addEventListener('click', () => {
+    exprInput.value = '';
+    resultLine.textContent = '\u00A0';
+    resultLine.classList.remove('error-line');
+    dmsLine.textContent = '';
+    justCalculated = false;
+    exprInput.focus();
+  });
+
+  function calculate(){
+    try{
+      const value = evalExpression(exprInput.value, angleMode, 0);
+      resultLine.classList.remove('error-line');
+      resultLine.textContent = '= ' + formatNumber(value);
+      lastResult = value;
+      justCalculated = true;
+      if(angleMode === 'DEG' && arcFuncPattern.test(exprInput.value)){
+        dmsLine.textContent = toDMS(value);
+      } else {
+        dmsLine.textContent = '';
+      }
+    } catch(e){
+      resultLine.classList.add('error-line');
+      resultLine.textContent = e.message;
+      dmsLine.textContent = '';
+      justCalculated = false;
+    }
+  }
+  document.getElementById('btnEquals').addEventListener('click', calculate);
+  exprInput.addEventListener('keydown', e => { if(e.key === 'Enter') calculate(); });
+
+  /* ===================== STATISTICS ===================== */
+  let statsData = [];
+
+  function renderChips(){
+    const chips = document.getElementById('statsChips');
+    chips.innerHTML = '';
+    statsData.forEach((val, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      const span = document.createElement('span');
+      span.textContent = formatNumber(val);
+      chip.appendChild(span);
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '×';
+      removeBtn.setAttribute('aria-label', 'Quitar dato');
+      removeBtn.addEventListener('click', () => {
+        statsData.splice(idx, 1);
+        syncTextareaFromData();
+        renderChips();
+      });
+      chip.appendChild(removeBtn);
+      chips.appendChild(chip);
+    });
+  }
+  function syncTextareaFromData(){
+    document.getElementById('statsInput').value = statsData.join(', ');
+  }
+  function syncDataFromTextarea(){
+    const raw = document.getElementById('statsInput').value;
+    statsData = raw.split(/[,\s]+/).map(s => s.trim()).filter(s => s.length).map(Number).filter(n => !isNaN(n));
+  }
+
+  const datoInput = document.getElementById('datoInput');
+  document.getElementById('btnAddDato').addEventListener('click', () => {
+    const val = parseFloat(datoInput.value);
+    if(isNaN(val)) { datoInput.focus(); return; }
+    statsData.push(val);
+    syncTextareaFromData();
+    renderChips();
+    datoInput.value = '';
+    datoInput.focus();
+  });
+  datoInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('btnAddDato').click(); }
+  });
+  document.getElementById('statsInput').addEventListener('input', () => {
+    syncDataFromTextarea();
+    renderChips();
+  });
+
+  document.getElementById('btnCalcStats').addEventListener('click', () => {
+    const raw = document.getElementById('statsInput').value;
+    const nums = raw.split(/[,\s]+/).map(s => s.trim()).filter(s => s.length).map(Number).filter(n => !isNaN(n));
+    const grid = document.getElementById('statsGrid');
+    const note = document.getElementById('statsNote');
+    grid.innerHTML = '';
+    if(nums.length === 0){
+      note.textContent = 'Ingresa al menos un número válido.';
+      return;
+    }
+    note.textContent = '';
+    const n = nums.length;
+    const sum = nums.reduce((a,b) => a+b, 0);
+    const mean = sum / n;
+    const sorted = [...nums].sort((a,b) => a-b);
+    const median = n % 2 === 0 ? (sorted[n/2 - 1] + sorted[n/2]) / 2 : sorted[(n-1)/2];
+    const freq = {};
+    nums.forEach(v => freq[v] = (freq[v]||0) + 1);
+    const maxFreq = Math.max(...Object.values(freq));
+    let modes = Object.keys(freq).filter(k => freq[k] === maxFreq).map(Number);
+    const modeStr = maxFreq === 1 ? 'No hay (todos únicos)' : modes.join(', ');
+    const min = sorted[0], max = sorted[n-1];
+    const range = max - min;
+    const sqDiffs = nums.map(v => (v - mean) ** 2);
+    const varPop = sqDiffs.reduce((a,b) => a+b, 0) / n;
+    const varSample = n > 1 ? sqDiffs.reduce((a,b) => a+b, 0) / (n-1) : NaN;
+    const sdPop = Math.sqrt(varPop);
+    const sdSample = Math.sqrt(varSample);
+
+    const cells = [
+      ['Cantidad de datos (n)', n],
+      ['Suma', formatNumber(sum)],
+      ['Media', formatNumber(mean)],
+      ['Mediana', formatNumber(median)],
+      ['Moda', modeStr],
+      ['Mínimo', formatNumber(min)],
+      ['Máximo', formatNumber(max)],
+      ['Rango', formatNumber(range)],
+      ['Varianza (poblacional)', formatNumber(varPop)],
+      ['Varianza (muestral)', n>1 ? formatNumber(varSample) : 'N/A'],
+      ['Desv. estándar (poblacional)', formatNumber(sdPop)],
+      ['Desv. estándar (muestral)', n>1 ? formatNumber(sdSample) : 'N/A'],
+    ];
+    cells.forEach(([label, value]) => {
+      const div = document.createElement('div');
+      div.className = 'stat-cell';
+      div.innerHTML = '<div class="label">'+label+'</div><div class="value">'+value+'</div>';
+      grid.appendChild(div);
+    });
+  });
+
+  /* ===================== GRAPH ===================== */
+  const canvas = document.getElementById('graphCanvas');
+  const ctx = canvas.getContext('2d');
+  const graphError = document.getElementById('graphError');
+
+  function resizeCanvas(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function drawGraph(){
+    const rect = canvas.getBoundingClientRect();
+    const W = rect.width, H = rect.height;
+    ctx.clearRect(0,0,W,H);
+
+    const fxRaw = document.getElementById('fxInput').value || 'x';
+    const xmin = parseFloat(document.getElementById('xminInput').value);
+    const xmax = parseFloat(document.getElementById('xmaxInput').value);
+    graphError.textContent = '';
+
+    if(isNaN(xmin) || isNaN(xmax) || xmin >= xmax){
+      graphError.textContent = 'Revisa el rango de x (mínimo debe ser menor que máximo).';
+      return;
+    }
+
+    let ast;
+    try {
+      ast = parseTokens(tokenize(fxRaw));
+    } catch(e){
+      graphError.textContent = 'Error en f(x): ' + e.message;
+      return;
+    }
+
+    const steps = 400;
+    const points = [];
+    let ymin = Infinity, ymax = -Infinity;
+    for(let i=0; i<=steps; i++){
+      const x = xmin + (xmax-xmin) * i/steps;
+      let y;
+      try { y = evaluateAst(ast, x, angleMode); } catch(e){ y = NaN; }
+      if(typeof y !== 'number' || !isFinite(y)) y = NaN;
+      points.push({x,y});
+      if(!isNaN(y)){ if(y<ymin) ymin=y; if(y>ymax) ymax=y; }
+    }
+    if(!isFinite(ymin) || !isFinite(ymax)){
+      graphError.textContent = 'No se pudo evaluar f(x) en ese rango.';
+      return;
+    }
+    if(ymin === ymax){ ymin -= 1; ymax += 1; }
+    const pad = (ymax - ymin) * 0.1;
+    ymin -= pad; ymax += pad;
+
+    const marginL = 38, marginR = 12, marginT = 12, marginB = 22;
+    const plotW = W - marginL - marginR;
+    const plotH = H - marginT - marginB;
+
+    function sx(x){ return marginL + (x - xmin) / (xmax - xmin) * plotW; }
+    function sy(y){ return marginT + (1 - (y - ymin) / (ymax - ymin)) * plotH; }
+
+    // grid
+    ctx.strokeStyle = 'rgba(126,231,135,0.12)';
+    ctx.lineWidth = 1;
+    const gridLinesX = 8, gridLinesY = 6;
+    for(let i=0;i<=gridLinesX;i++){
+      const gx = marginL + plotW * i/gridLinesX;
+      ctx.beginPath(); ctx.moveTo(gx, marginT); ctx.lineTo(gx, marginT+plotH); ctx.stroke();
+    }
+    for(let i=0;i<=gridLinesY;i++){
+      const gy = marginT + plotH * i/gridLinesY;
+      ctx.beginPath(); ctx.moveTo(marginL, gy); ctx.lineTo(marginL+plotW, gy); ctx.stroke();
+    }
+
+    // axes
+    ctx.strokeStyle = 'rgba(126,231,135,0.5)';
+    ctx.lineWidth = 1.3;
+    if(xmin <= 0 && xmax >= 0){
+      const axisX = sx(0);
+      ctx.beginPath(); ctx.moveTo(axisX, marginT); ctx.lineTo(axisX, marginT+plotH); ctx.stroke();
+    }
+    if(ymin <= 0 && ymax >= 0){
+      const axisY = sy(0);
+      ctx.beginPath(); ctx.moveTo(marginL, axisY); ctx.lineTo(marginL+plotW, axisY); ctx.stroke();
+    }
+
+    // axis labels
+    ctx.fillStyle = 'rgba(126,231,135,0.6)';
+    ctx.font = '10px ' + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = 'left';
+    ctx.fillText(xmin.toFixed(1), marginL, H-6);
+    ctx.textAlign = 'right';
+    ctx.fillText(xmax.toFixed(1), marginL+plotW, H-6);
+    ctx.textAlign = 'left';
+    ctx.fillText(ymax.toFixed(1), 2, marginT+8);
+    ctx.fillText(ymin.toFixed(1), 2, marginT+plotH);
+
+    // curve
+    ctx.strokeStyle = '#7ee787';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let drawing = false;
+    points.forEach(p => {
+      if(isNaN(p.y)){ drawing = false; return; }
+      const px = sx(p.x), py = sy(p.y);
+      if(!drawing){ ctx.moveTo(px,py); drawing = true; }
+      else ctx.lineTo(px,py);
+    });
+    ctx.stroke();
+  }
+
+  function drawGraphIfPossible(){
+    resizeCanvas();
+    drawGraph();
+  }
+
+  document.getElementById('btnPlot').addEventListener('click', drawGraphIfPossible);
+  window.addEventListener('resize', () => {
+    if(panels.graph.classList.contains('active')) drawGraphIfPossible();
+  });
+
+  /* ===================== UNIT CONVERSION ===================== */
+  // Categorías lineales: cada unidad tiene un factor respecto a una unidad base.
+  const linearCategories = {
+    longitud: {
+      label: 'Longitud',
+      units: {
+        mm:{label:'Milímetros (mm)', factor:0.001},
+        cm:{label:'Centímetros (cm)', factor:0.01},
+        m:{label:'Metros (m)', factor:1},
+        km:{label:'Kilómetros (km)', factor:1000},
+        in:{label:'Pulgadas (in)', factor:0.0254},
+        ft:{label:'Pies (ft)', factor:0.3048},
+        yd:{label:'Yardas (yd)', factor:0.9144},
+        mi:{label:'Millas (mi)', factor:1609.344}
+      }
+    },
+    area: {
+      label: 'Área',
+      units: {
+        mm2:{label:'mm²', factor:1e-6},
+        cm2:{label:'cm²', factor:1e-4},
+        m2:{label:'m²', factor:1},
+        km2:{label:'km²', factor:1e6},
+        in2:{label:'in²', factor:0.00064516},
+        ft2:{label:'ft²', factor:0.09290304},
+        yd2:{label:'yd²', factor:0.83612736},
+        ha:{label:'Hectáreas (ha)', factor:10000},
+        acre:{label:'Acres', factor:4046.8564224}
+      }
+    },
+    volumen: {
+      label: 'Volumen',
+      units: {
+        ml:{label:'Mililitros (ml)', factor:0.001},
+        l:{label:'Litros (l)', factor:1},
+        m3:{label:'m³', factor:1000},
+        in3:{label:'in³', factor:0.0163871},
+        ft3:{label:'ft³', factor:28.316846592},
+        galUS:{label:'Galones (US)', factor:3.785411784},
+        qtUS:{label:'Cuartos (US qt)', factor:0.946352946},
+        cup:{label:'Tazas (cup)', factor:0.236588236}
+      }
+    },
+    energia: {
+      label: 'Energía',
+      units: {
+        cal:{label:'Calorías (cal)', factor:4.184},
+        kcal:{label:'Kilocalorías (kcal)', factor:4184},
+        j:{label:'Joules (J)', factor:1},
+        kj:{label:'Kilojoules (kJ)', factor:1000},
+        btu:{label:'BTU', factor:1055.05585262},
+        wh:{label:'Watt-hora (Wh)', factor:3600}
+      }
+    },
+    presion: {
+      label: 'Presión',
+      units: {
+        pa:{label:'Pascales (Pa)', factor:1},
+        kpa:{label:'Kilopascales (kPa)', factor:1000},
+        bar:{label:'Bar', factor:100000},
+        atm:{label:'Atmósferas (atm)', factor:101325},
+        psi:{label:'PSI', factor:6894.757293168},
+        mmhg:{label:'mmHg', factor:133.322387415}
+      }
+    },
+    velocidad: {
+      label: 'Velocidad',
+      units: {
+        ms:{label:'Metros/segundo (m/s)', factor:1},
+        kmh:{label:'Kilómetros/hora (km/h)', factor:1/3.6},
+        mph:{label:'Millas/hora (mph)', factor:0.44704},
+        nudo:{label:'Nudos (kn)', factor:0.514444444},
+        fts:{label:'Pies/segundo (ft/s)', factor:0.3048}
+      }
+    },
+    tiempo: {
+      label: 'Tiempo',
+      units: {
+        ms_t:{label:'Milisegundos (ms)', factor:0.001},
+        s:{label:'Segundos (s)', factor:1},
+        min:{label:'Minutos (min)', factor:60},
+        h:{label:'Horas (h)', factor:3600},
+        dia:{label:'Días', factor:86400},
+        semana:{label:'Semanas', factor:604800}
+      }
+    }
+  };
+
+  // Temperatura absoluta: requiere desplazamiento (offset), no solo factor.
+  const tempAbsUnits = {
+    c: {label:'Celsius (°C)', toKelvin: v => v + 273.15, fromKelvin: k => k - 273.15},
+    f: {label:'Fahrenheit (°F)', toKelvin: v => (v - 32) * 5/9 + 273.15, fromKelvin: k => (k - 273.15) * 9/5 + 32},
+    k: {label:'Kelvin (K)', toKelvin: v => v, fromKelvin: k => k}
+  };
+  // Cambio/incremento de temperatura: solo escala, sin desplazamiento.
+  const tempDeltaUnits = {
+    c: {label:'°C (incremento)', toBase: v => v, fromBase: v => v},
+    f: {label:'°F (incremento)', toBase: v => v * 5/9, fromBase: v => v * 9/5},
+    k: {label:'K (incremento)', toBase: v => v, fromBase: v => v}
+  };
+
+  const categoryOrder = [
+    ['longitud', linearCategories.longitud.label],
+    ['area', linearCategories.area.label],
+    ['volumen', linearCategories.volumen.label],
+    ['temperatura', 'Temperatura'],
+    ['temperatura_delta', 'Cambio de temperatura (Δ)'],
+    ['velocidad', linearCategories.velocidad.label],
+    ['tiempo', linearCategories.tiempo.label],
+    ['energia', linearCategories.energia.label],
+    ['presion', linearCategories.presion.label]
+  ];
+
+  const convCategory = document.getElementById('convCategory');
+  const convFrom = document.getElementById('convFrom');
+  const convTo = document.getElementById('convTo');
+  const convValue = document.getElementById('convValue');
+  const convResult = document.getElementById('convResult');
+  const convNote = document.getElementById('convNote');
+
+  categoryOrder.forEach(([key, label]) => {
+    const opt = document.createElement('option');
+    opt.value = key; opt.textContent = label;
+    convCategory.appendChild(opt);
+  });
+
+  function getUnitsForCategory(catKey){
+    if(catKey === 'temperatura') return tempAbsUnits;
+    if(catKey === 'temperatura_delta') return tempDeltaUnits;
+    return linearCategories[catKey].units;
+  }
+
+  function populateUnitSelects(){
+    const catKey = convCategory.value;
+    const units = getUnitsForCategory(catKey);
+    [convFrom, convTo].forEach(sel => sel.innerHTML = '');
+    Object.entries(units).forEach(([uKey, u]) => {
+      const opt1 = document.createElement('option'); opt1.value = uKey; opt1.textContent = u.label;
+      const opt2 = opt1.cloneNode(true);
+      convFrom.appendChild(opt1);
+      convTo.appendChild(opt2);
+    });
+    // Elegir por defecto dos unidades distintas cuando sea posible
+    if(convTo.options.length > 1) convTo.selectedIndex = 1;
+  }
+
+  function runConversion(){
+    const catKey = convCategory.value;
+    const from = convFrom.value, to = convTo.value;
+    const raw = parseFloat(convValue.value);
+    convNote.textContent = '';
+    if(isNaN(raw)){
+      convResult.textContent = '—';
+      convNote.textContent = 'Ingresa un valor numérico.';
+      return;
+    }
+    let result;
+    if(catKey === 'temperatura'){
+      const units = tempAbsUnits;
+      const kelvin = units[from].toKelvin(raw);
+      result = units[to].fromKelvin(kelvin);
+    } else if(catKey === 'temperatura_delta'){
+      const units = tempDeltaUnits;
+      const base = units[from].toBase(raw);
+      result = units[to].fromBase(base);
+    } else {
+      const units = linearCategories[catKey].units;
+      const base = raw * units[from].factor;
+      result = base / units[to].factor;
+    }
+    convResult.textContent = formatNumber(result);
+  }
+
+  convCategory.addEventListener('change', () => { populateUnitSelects(); runConversion(); });
+  convFrom.addEventListener('change', runConversion);
+  convTo.addEventListener('change', runConversion);
+  convValue.addEventListener('input', runConversion);
+  document.getElementById('convSwap').addEventListener('click', () => {
+    const f = convFrom.value;
+    convFrom.value = convTo.value;
+    convTo.value = f;
+    runConversion();
+  });
+
+  populateUnitSelects();
+  runConversion();
+
+  /* ===================== CHEMISTRY ===================== */
+  // Subtabs dentro del panel de química
+  document.querySelectorAll('.subtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.subtab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('subpanel-' + btn.dataset.subtab).classList.add('active');
+    });
+  });
+
+  const ELEMENTS = [
+    {z:1,sym:"H",name:"Hidrógeno",mass:1.008},
+    {z:2,sym:"He",name:"Helio",mass:4.0026},
+    {z:3,sym:"Li",name:"Litio",mass:6.94},
+    {z:4,sym:"Be",name:"Berilio",mass:9.0122},
+    {z:5,sym:"B",name:"Boro",mass:10.81},
+    {z:6,sym:"C",name:"Carbono",mass:12.011},
+    {z:7,sym:"N",name:"Nitrógeno",mass:14.007},
+    {z:8,sym:"O",name:"Oxígeno",mass:15.999},
+    {z:9,sym:"F",name:"Flúor",mass:18.998},
+    {z:10,sym:"Ne",name:"Neón",mass:20.18},
+    {z:11,sym:"Na",name:"Sodio",mass:22.99},
+    {z:12,sym:"Mg",name:"Magnesio",mass:24.305},
+    {z:13,sym:"Al",name:"Aluminio",mass:26.982},
+    {z:14,sym:"Si",name:"Silicio",mass:28.085},
+    {z:15,sym:"P",name:"Fósforo",mass:30.974},
+    {z:16,sym:"S",name:"Azufre",mass:32.06},
+    {z:17,sym:"Cl",name:"Cloro",mass:35.45},
+    {z:18,sym:"Ar",name:"Argón",mass:39.948},
+    {z:19,sym:"K",name:"Potasio",mass:39.098},
+    {z:20,sym:"Ca",name:"Calcio",mass:40.078},
+    {z:21,sym:"Sc",name:"Escandio",mass:44.956},
+    {z:22,sym:"Ti",name:"Titanio",mass:47.867},
+    {z:23,sym:"V",name:"Vanadio",mass:50.942},
+    {z:24,sym:"Cr",name:"Cromo",mass:51.996},
+    {z:25,sym:"Mn",name:"Manganeso",mass:54.938},
+    {z:26,sym:"Fe",name:"Hierro",mass:55.845},
+    {z:27,sym:"Co",name:"Cobalto",mass:58.933},
+    {z:28,sym:"Ni",name:"Níquel",mass:58.693},
+    {z:29,sym:"Cu",name:"Cobre",mass:63.546},
+    {z:30,sym:"Zn",name:"Zinc",mass:65.38},
+    {z:31,sym:"Ga",name:"Galio",mass:69.723},
+    {z:32,sym:"Ge",name:"Germanio",mass:72.63},
+    {z:33,sym:"As",name:"Arsénico",mass:74.922},
+    {z:34,sym:"Se",name:"Selenio",mass:78.971},
+    {z:35,sym:"Br",name:"Bromo",mass:79.904},
+    {z:36,sym:"Kr",name:"Kriptón",mass:83.798},
+    {z:37,sym:"Rb",name:"Rubidio",mass:85.468},
+    {z:38,sym:"Sr",name:"Estroncio",mass:87.62},
+    {z:39,sym:"Y",name:"Itrio",mass:88.906},
+    {z:40,sym:"Zr",name:"Zirconio",mass:91.224},
+    {z:41,sym:"Nb",name:"Niobio",mass:92.906},
+    {z:42,sym:"Mo",name:"Molibdeno",mass:95.95},
+    {z:43,sym:"Tc",name:"Tecnecio",mass:98},
+    {z:44,sym:"Ru",name:"Rutenio",mass:101.07},
+    {z:45,sym:"Rh",name:"Rodio",mass:102.91},
+    {z:46,sym:"Pd",name:"Paladio",mass:106.42},
+    {z:47,sym:"Ag",name:"Plata",mass:107.87},
+    {z:48,sym:"Cd",name:"Cadmio",mass:112.41},
+    {z:49,sym:"In",name:"Indio",mass:114.82},
+    {z:50,sym:"Sn",name:"Estaño",mass:118.71},
+    {z:51,sym:"Sb",name:"Antimonio",mass:121.76},
+    {z:52,sym:"Te",name:"Telurio",mass:127.6},
+    {z:53,sym:"I",name:"Yodo",mass:126.9},
+    {z:54,sym:"Xe",name:"Xenón",mass:131.29},
+    {z:55,sym:"Cs",name:"Cesio",mass:132.91},
+    {z:56,sym:"Ba",name:"Bario",mass:137.33},
+    {z:57,sym:"La",name:"Lantano",mass:138.91},
+    {z:58,sym:"Ce",name:"Cerio",mass:140.12},
+    {z:59,sym:"Pr",name:"Praseodimio",mass:140.91},
+    {z:60,sym:"Nd",name:"Neodimio",mass:144.24},
+    {z:61,sym:"Pm",name:"Prometio",mass:145},
+    {z:62,sym:"Sm",name:"Samario",mass:150.36},
+    {z:63,sym:"Eu",name:"Europio",mass:151.96},
+    {z:64,sym:"Gd",name:"Gadolinio",mass:157.25},
+    {z:65,sym:"Tb",name:"Terbio",mass:158.93},
+    {z:66,sym:"Dy",name:"Disprosio",mass:162.5},
+    {z:67,sym:"Ho",name:"Holmio",mass:164.93},
+    {z:68,sym:"Er",name:"Erbio",mass:167.26},
+    {z:69,sym:"Tm",name:"Tulio",mass:168.93},
+    {z:70,sym:"Yb",name:"Iterbio",mass:173.05},
+    {z:71,sym:"Lu",name:"Lutecio",mass:174.97},
+    {z:72,sym:"Hf",name:"Hafnio",mass:178.49},
+    {z:73,sym:"Ta",name:"Tantalio",mass:180.95},
+    {z:74,sym:"W",name:"Wolframio",mass:183.84},
+    {z:75,sym:"Re",name:"Renio",mass:186.21},
+    {z:76,sym:"Os",name:"Osmio",mass:190.23},
+    {z:77,sym:"Ir",name:"Iridio",mass:192.22},
+    {z:78,sym:"Pt",name:"Platino",mass:195.08},
+    {z:79,sym:"Au",name:"Oro",mass:196.97},
+    {z:80,sym:"Hg",name:"Mercurio",mass:200.59},
+    {z:81,sym:"Tl",name:"Talio",mass:204.38},
+    {z:82,sym:"Pb",name:"Plomo",mass:207.2},
+    {z:83,sym:"Bi",name:"Bismuto",mass:208.98},
+    {z:84,sym:"Po",name:"Polonio",mass:209},
+    {z:85,sym:"At",name:"Astato",mass:210},
+    {z:86,sym:"Rn",name:"Radón",mass:222},
+    {z:87,sym:"Fr",name:"Francio",mass:223},
+    {z:88,sym:"Ra",name:"Radio",mass:226},
+    {z:89,sym:"Ac",name:"Actinio",mass:227},
+    {z:90,sym:"Th",name:"Torio",mass:232.04},
+    {z:91,sym:"Pa",name:"Protactinio",mass:231.04},
+    {z:92,sym:"U",name:"Uranio",mass:238.03},
+    {z:93,sym:"Np",name:"Neptunio",mass:237},
+    {z:94,sym:"Pu",name:"Plutonio",mass:244},
+    {z:95,sym:"Am",name:"Americio",mass:243},
+    {z:96,sym:"Cm",name:"Curio",mass:247},
+    {z:97,sym:"Bk",name:"Berkelio",mass:247},
+    {z:98,sym:"Cf",name:"Californio",mass:251},
+    {z:99,sym:"Es",name:"Einstenio",mass:252},
+    {z:100,sym:"Fm",name:"Fermio",mass:257},
+    {z:101,sym:"Md",name:"Mendelevio",mass:258},
+    {z:102,sym:"No",name:"Nobelio",mass:259},
+    {z:103,sym:"Lr",name:"Laurencio",mass:266},
+    {z:104,sym:"Rf",name:"Rutherfordio",mass:267},
+    {z:105,sym:"Db",name:"Dubnio",mass:268},
+    {z:106,sym:"Sg",name:"Seaborgio",mass:269},
+    {z:107,sym:"Bh",name:"Bohrio",mass:270},
+    {z:108,sym:"Hs",name:"Hasio",mass:269},
+    {z:109,sym:"Mt",name:"Meitnerio",mass:278},
+    {z:110,sym:"Ds",name:"Darmstadtio",mass:281},
+    {z:111,sym:"Rg",name:"Roentgenio",mass:282},
+    {z:112,sym:"Cn",name:"Copernicio",mass:285},
+    {z:113,sym:"Nh",name:"Nihonio",mass:286},
+    {z:114,sym:"Fl",name:"Flerovio",mass:289},
+    {z:115,sym:"Mc",name:"Moscovio",mass:290},
+    {z:116,sym:"Lv",name:"Livermorio",mass:293},
+    {z:117,sym:"Ts",name:"Teneso",mass:294},
+    {z:118,sym:"Og",name:"Oganesón",mass:294}
+  ];
+  const elementBySymbol = {};
+  const elementByZ = {};
+  ELEMENTS.forEach(e => { elementBySymbol[e.sym] = e; elementByZ[e.z] = e; });
+
+  // ---- Fórmulas químicas y masa molar ----
+  function parseChemFormula(formula){
+    let i = 0;
+    function parseGroup(){
+      let counts = {};
+      while(i < formula.length && formula[i] !== ')'){
+        if(formula[i] === '('){
+          i++;
+          const inner = parseGroup();
+          if(formula[i] !== ')') throw new Error('Falta ")" en la fórmula');
+          i++;
+          let numStr = '';
+          while(i < formula.length && /[0-9]/.test(formula[i])){ numStr += formula[i]; i++; }
+          const mult = numStr ? parseInt(numStr) : 1;
+          for(const el in inner) counts[el] = (counts[el]||0) + inner[el]*mult;
+        } else if(/[A-Z]/.test(formula[i])){
+          let sym = formula[i]; i++;
+          while(i < formula.length && /[a-z]/.test(formula[i])){ sym += formula[i]; i++; }
+          let numStr = '';
+          while(i < formula.length && /[0-9]/.test(formula[i])){ numStr += formula[i]; i++; }
+          const mult = numStr ? parseInt(numStr) : 1;
+          if(!elementBySymbol[sym]) throw new Error('Elemento desconocido: "' + sym + '"');
+          counts[sym] = (counts[sym]||0) + mult;
+        } else {
+          throw new Error('Carácter inesperado: "' + formula[i] + '"');
+        }
+      }
+      return counts;
+    }
+    const result = parseGroup();
+    if(i !== formula.length) throw new Error('Fórmula mal formada (revisa los paréntesis)');
+    if(Object.keys(result).length === 0) throw new Error('Escribe una fórmula, por ejemplo H2O');
+    return result;
+  }
+
+  document.getElementById('btnMolar').addEventListener('click', () => {
+    const out = document.getElementById('molarResult');
+    const raw = document.getElementById('molarInput').value.trim();
+    try {
+      const counts = parseChemFormula(raw);
+      let total = 0;
+      const rows = Object.entries(counts).map(([sym, n]) => {
+        const el = elementBySymbol[sym];
+        const sub = el.mass * n;
+        total += sub;
+        return '<tr><td>' + el.name + ' (' + sym + ') × ' + n + '</td><td>' + (Math.round(sub*1000)/1000) + ' g/mol</td></tr>';
+      }).join('');
+      out.innerHTML = '<table class="chem-table">' + rows + '</table>' +
+        '<div style="margin-top:8px; font-size:16px; font-weight:700;">Masa molar total: ' + (Math.round(total*1000)/1000) + ' g/mol</div>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  // ---- Configuración electrónica ----
+  const fillOrder = [
+    [1,'s',2], [2,'s',2], [2,'p',6], [3,'s',2], [3,'p',6], [4,'s',2], [3,'d',10],
+    [4,'p',6], [5,'s',2], [4,'d',10], [5,'p',6], [6,'s',2], [4,'f',14], [5,'d',10],
+    [6,'p',6], [7,'s',2], [5,'f',14], [6,'d',10], [7,'p',6]
+  ];
+  const lOrderRank = {s:0,p:1,d:2,f:3};
+  const econfigExceptions = {
+    24: '1s2 2s2 2p6 3s2 3p6 3d5 4s1',
+    29: '1s2 2s2 2p6 3s2 3p6 3d10 4s1',
+    41: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d4 5s1',
+    42: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d5 5s1',
+    44: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d7 5s1',
+    45: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d8 5s1',
+    46: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10',
+    47: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s1',
+    57: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 5d1 6s2',
+    58: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f1 5d1 6s2',
+    64: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f7 5d1 6s2',
+    78: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d9 6s1',
+    79: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s1',
+    89: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d1 7s2',
+    90: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 6d2 7s2',
+    91: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f2 6d1 7s2',
+    92: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f3 6d1 7s2',
+    93: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f4 6d1 7s2',
+    96: '1s2 2s2 2p6 3s2 3p6 3d10 4s2 4p6 4d10 5s2 5p6 4f14 5d10 6s2 6p6 5f7 6d1 7s2'
+  };
+  function parseConfigTokens(str){
+    return str.trim().split(/\s+/).map(tok => {
+      const m = tok.match(/^(\d+)([spdf])(\d+)$/);
+      return [Number(m[1]), m[2], Number(m[3])];
+    });
+  }
+  function electronConfigTokens(z){
+    if(econfigExceptions[z]) return parseConfigTokens(econfigExceptions[z]);
+    let remaining = z;
+    const parts = [];
+    for(const [n,l,cap] of fillOrder){
+      if(remaining <= 0) break;
+      const e = Math.min(cap, remaining);
+      parts.push([n,l,e]);
+      remaining -= e;
+    }
+    return parts;
+  }
+  function formatElectronConfig(z){
+    const tokens = electronConfigTokens(z);
+    const sorted = [...tokens].sort((a,b) => a[0]-b[0] || lOrderRank[a[1]]-lOrderRank[b[1]]);
+    return sorted.map(([n,l,c]) => n + l + c).join(' ');
+  }
+
+  document.getElementById('btnEconfig').addEventListener('click', () => {
+    const out = document.getElementById('econfigResult');
+    const raw = document.getElementById('econfigInput').value.trim();
+    let el = null;
+    if(/^\d+$/.test(raw)){
+      el = elementByZ[parseInt(raw)];
+    } else {
+      const sym = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+      el = elementBySymbol[sym];
+    }
+    if(!el){
+      out.innerHTML = '<span class="chem-error">No reconozco ese elemento. Escribe un símbolo (Fe) o un número atómico (26).</span>';
+      return;
+    }
+    const config = formatElectronConfig(el.z);
+    const valenceMatch = config.split(' ').filter(t => !/^\d*[fd]/.test(t.slice(1)) || true);
+    out.innerHTML =
+      '<div style="font-size:16px; font-weight:700; color:var(--text);">' + el.name + ' (' + el.sym + ') — Z = ' + el.z + '</div>' +
+      '<div style="margin-top:8px;">' + config + '</div>';
+  });
+
+  // ---- Balanceo de ecuaciones (fracciones exactas) ----
+  function gcdInt(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=b; b=a%b; a=t; } return a || 1; }
+  function frac(n,d){
+    d = d===undefined ? 1 : d;
+    if(d < 0){ n=-n; d=-d; }
+    const g = gcdInt(n,d) || 1;
+    return { n: n/g, d: d/g };
+  }
+  const fadd = (a,b) => frac(a.n*b.d + b.n*a.d, a.d*b.d);
+  const fsub = (a,b) => frac(a.n*b.d - b.n*a.d, a.d*b.d);
+  const fmul = (a,b) => frac(a.n*b.n, a.d*b.d);
+  const fdiv = (a,b) => frac(a.n*b.d, a.d*b.n);
+  const fneg = (a) => frac(-a.n, a.d);
+  const fzero = (a) => a.n === 0;
+  const toF = (x) => frac(x,1);
+
+  function stripLeadingCoefficient(compound){ return compound.replace(/^\d+/, ''); }
+
+  function balanceChemEquation(equationStr){
+    let sep = null;
+    if(equationStr.includes('->')) sep = '->';
+    else if(equationStr.includes('\u2192')) sep = '\u2192';
+    else if(equationStr.includes('=')) sep = '=';
+    if(!sep) throw new Error('Usa "->" para separar reactivos de productos, ej: Fe + O2 -> Fe2O3');
+
+    const [leftRaw, rightRaw] = equationStr.split(sep);
+    if(!rightRaw || !rightRaw.trim()) throw new Error('Falta el lado derecho de la ecuación');
+    const leftCompounds = leftRaw.split('+').map(s => s.trim()).filter(Boolean);
+    const rightCompounds = rightRaw.split('+').map(s => s.trim()).filter(Boolean);
+    if(leftCompounds.length === 0 || rightCompounds.length === 0) throw new Error('Ecuación incompleta');
+    const allCompounds = [...leftCompounds, ...rightCompounds];
+    const signs = [...leftCompounds.map(()=>1), ...rightCompounds.map(()=>-1)];
+
+    const parsed = allCompounds.map(c => parseChemFormula(stripLeadingCoefficient(c)));
+    const elementsUsed = [...new Set(parsed.flatMap(p => Object.keys(p)))];
+    const nCompounds = allCompounds.length;
+
+    let matrix = elementsUsed.map(el => parsed.map((p,c) => toF((p[el]||0) * signs[c])));
+
+    let pivotCols = [];
+    let row = 0;
+    for(let col = 0; col < nCompounds && row < matrix.length; col++){
+      let pivotRow = -1;
+      for(let r = row; r < matrix.length; r++){ if(!fzero(matrix[r][col])){ pivotRow = r; break; } }
+      if(pivotRow === -1) continue;
+      [matrix[row], matrix[pivotRow]] = [matrix[pivotRow], matrix[row]];
+      const pivotVal = matrix[row][col];
+      matrix[row] = matrix[row].map(v => fdiv(v, pivotVal));
+      for(let r = 0; r < matrix.length; r++){
+        if(r !== row && !fzero(matrix[r][col])){
+          const factor = matrix[r][col];
+          matrix[r] = matrix[r].map((v,c2) => fsub(v, fmul(factor, matrix[row][c2])));
+        }
+      }
+      pivotCols.push(col);
+      row++;
+    }
+
+    const freeCols = [];
+    for(let c = 0; c < nCompounds; c++) if(!pivotCols.includes(c)) freeCols.push(c);
+    if(freeCols.length !== 1){
+      throw new Error('No se pudo balancear automáticamente. Revisa que la ecuación esté bien escrita.');
+    }
+    const freeCol = freeCols[0];
+
+    let solution = new Array(nCompounds).fill(null);
+    solution[freeCol] = toF(1);
+    for(let r = 0; r < pivotCols.length; r++){
+      const col = pivotCols[r];
+      solution[col] = fneg(matrix[r][freeCol]);
+    }
+
+    const lcm = (a,b) => Math.abs(a*b) / gcdInt(a,b);
+    let commonDen = 1;
+    solution.forEach(s => { commonDen = lcm(commonDen, s.d); });
+    let ints = solution.map(s => Math.round(s.n * (commonDen / s.d)));
+    let g = ints.reduce((a,b) => gcdInt(a,b), 0) || 1;
+    ints = ints.map(v => v / g);
+    if(ints.some(v => v < 0)) ints = ints.map(v => -v);
+    if(ints.some(v => v === 0)) throw new Error('No se pudo balancear automáticamente (coeficiente cero).');
+
+    const leftBalanced = leftCompounds.map((c,idx) => (ints[idx] === 1 ? '' : ints[idx]) + c).join(' + ');
+    const rightBalanced = rightCompounds.map((c,idx) => {
+      const coeff = ints[leftCompounds.length + idx];
+      return (coeff === 1 ? '' : coeff) + c;
+    }).join(' + ');
+
+    return { equation: leftBalanced + ' \u2192 ' + rightBalanced, coefficients: ints };
+  }
+
+  document.getElementById('btnBalance').addEventListener('click', () => {
+    const out = document.getElementById('balanceResult');
+    const raw = document.getElementById('balanceInput').value.trim();
+    try {
+      const result = balanceChemEquation(raw);
+      out.innerHTML = '<div style="font-size:16px; font-weight:700;">' + result.equation + '</div>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  /* ===================== MATH TOOLS (triángulos, cuadrática, vectores) ===================== */
+  document.querySelectorAll('[data-mathsubtab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mathsubtab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#panel-math .subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('mathsubpanel-' + btn.dataset.mathsubtab).classList.add('active');
+    });
+  });
+
+  // ---- Triángulos (ley de senos y cosenos) ----
+  const toRadM = d => d*Math.PI/180;
+  const toDegM = r => r*180/Math.PI;
+
+  function solveTriangle(sides, angles){
+    let S = { a: sides.a, b: sides.b, c: sides.c };
+    let Ang = { A: angles.A, B: angles.B, C: angles.C };
+    const sideKeys = ['a','b','c'];
+    const angleKeys = ['A','B','C'];
+    const nSides = sideKeys.filter(k => S[k] != null).length;
+    const nAngles = angleKeys.filter(k => Ang[k] != null).length;
+
+    if(nSides === 0) throw new Error('Ingresa al menos un lado (los ángulos solos no determinan el tamaño).');
+    if(nSides + nAngles < 3) throw new Error('Faltan datos: ingresa al menos 3 valores en total.');
+
+    function lawOfCosinesAngle(opp, s1, s2){
+      const cosVal = (s1*s1 + s2*s2 - opp*opp) / (2*s1*s2);
+      if(cosVal < -1.0000001 || cosVal > 1.0000001) throw new Error('Esos lados no forman un triángulo válido.');
+      return toDegM(Math.acos(Math.max(-1,Math.min(1,cosVal))));
+    }
+
+    if(nSides === 3){
+      const {a,b,c} = S;
+      if(a+b<=c || a+c<=b || b+c<=a) throw new Error('Esos lados no forman un triángulo válido (desigualdad triangular).');
+      const AA = lawOfCosinesAngle(a,b,c);
+      const BB = lawOfCosinesAngle(b,a,c);
+      const CC = 180 - AA - BB;
+      return [{ a,b,c, A:AA, B:BB, C:CC }];
+    }
+
+    if(nAngles === 2){
+      const knownA = angleKeys.filter(k => Ang[k] != null);
+      const missingAngleKey = angleKeys.find(k => Ang[k] == null);
+      const sum2 = Ang[knownA[0]] + Ang[knownA[1]];
+      if(sum2 >= 180) throw new Error('La suma de esos dos ángulos ya es 180° o más.');
+      Ang[missingAngleKey] = 180 - sum2;
+      const knownSideKey = sideKeys.find(k => S[k] != null);
+      const k = S[knownSideKey] / Math.sin(toRadM(Ang[knownSideKey.toUpperCase()]));
+      sideKeys.forEach(sk => { if(S[sk] == null) S[sk] = k * Math.sin(toRadM(Ang[sk.toUpperCase()])); });
+      return [{ a:S.a, b:S.b, c:S.c, A:Ang.A, B:Ang.B, C:Ang.C }];
+    }
+
+    if(nSides === 2 && nAngles === 1){
+      const missingSideKey = sideKeys.find(k => S[k] == null);
+      const knownAngleKey = angleKeys.find(k => Ang[k] != null);
+      if(knownAngleKey.toLowerCase() === missingSideKey){
+        const others = sideKeys.filter(k => k !== missingSideKey);
+        const p = S[others[0]], q = S[others[1]];
+        const included = Ang[knownAngleKey];
+        const missingSideVal = Math.sqrt(p*p + q*q - 2*p*q*Math.cos(toRadM(included)));
+        S[missingSideKey] = missingSideVal;
+        const angleForOther0 = lawOfCosinesAngle(S[others[0]], S[others[1]], S[missingSideKey]);
+        Ang[others[0].toUpperCase()] = angleForOther0;
+        Ang[others[1].toUpperCase()] = 180 - included - angleForOther0;
+        return [{ a:S.a, b:S.b, c:S.c, A:Ang.A, B:Ang.B, C:Ang.C }];
+      } else {
+        const pKey = knownAngleKey.toLowerCase();
+        const p = S[pKey];
+        const P = Ang[knownAngleKey];
+        const qKey = sideKeys.filter(k => S[k] != null && k !== pKey)[0];
+        const q = S[qKey];
+        const sinQ = q * Math.sin(toRadM(P)) / p;
+        if(sinQ > 1.0000001) throw new Error('No existe un triángulo con esos datos (caso ambiguo sin solución).');
+        const Q1 = toDegM(Math.asin(Math.min(1,sinQ)));
+        const candidates = [Q1, 180 - Q1];
+        const results = [];
+        const seen = new Set();
+        for(const Qc of candidates){
+          const Rc = 180 - P - Qc;
+          const key = Qc.toFixed(4);
+          if(Rc > 0.0001 && !seen.has(key)){
+            seen.add(key);
+            const rKey = sideKeys.find(k => k !== pKey && k !== qKey);
+            const rVal = p * Math.sin(toRadM(Rc)) / Math.sin(toRadM(P));
+            const resAngles = {}; resAngles[knownAngleKey] = P;
+            resAngles[qKey.toUpperCase()] = Qc;
+            resAngles[rKey.toUpperCase()] = Rc;
+            const resSides = {}; resSides[pKey]=p; resSides[qKey]=q; resSides[rKey]=rVal;
+            results.push({ a:resSides.a,b:resSides.b,c:resSides.c, A:resAngles.A,B:resAngles.B,C:resAngles.C });
+          }
+        }
+        if(results.length === 0) throw new Error('No existe un triángulo con esos datos.');
+        return results;
+      }
+    }
+
+    throw new Error('Combinación de datos no soportada. Prueba con 3 lados, 2 lados + 1 ángulo, o 2 ángulos + 1 lado.');
+  }
+
+  function fmtNum(x){ return Math.round(x*1000)/1000; }
+
+  document.getElementById('btnTriangle').addEventListener('click', () => {
+    const out = document.getElementById('triangleResult');
+    const val = id => { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); };
+    try {
+      const results = solveTriangle(
+        { a: val('triA'), b: val('triB'), c: val('triC') },
+        { A: val('triAngA'), B: val('triAngB'), C: val('triAngC') }
+      );
+      out.innerHTML = results.map((r, idx) => {
+        const label = results.length > 1 ? '<div style="font-weight:700; margin-top:' + (idx>0?'12px':'0') + ';">Solución ' + (idx+1) + ':</div>' : '';
+        return label +
+          '<table class="chem-table">' +
+          '<tr><td>Lado a</td><td>' + fmtNum(r.a) + '</td></tr>' +
+          '<tr><td>Lado b</td><td>' + fmtNum(r.b) + '</td></tr>' +
+          '<tr><td>Lado c</td><td>' + fmtNum(r.c) + '</td></tr>' +
+          '<tr><td>Ángulo A</td><td>' + fmtNum(r.A) + '° &nbsp;(' + toDMS(r.A) + ')</td></tr>' +
+          '<tr><td>Ángulo B</td><td>' + fmtNum(r.B) + '° &nbsp;(' + toDMS(r.B) + ')</td></tr>' +
+          '<tr><td>Ángulo C</td><td>' + fmtNum(r.C) + '° &nbsp;(' + toDMS(r.C) + ')</td></tr>' +
+          '</table>';
+      }).join('');
+      if(results.length > 1){
+        out.innerHTML += '<div class="stat-note" style="margin-top:8px; padding:0;">Caso ambiguo (SSA): existen dos triángulos posibles con esos datos.</div>';
+      }
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  // ---- Ecuación de segundo grado ----
+  function solveQuadratic(a,b,c){
+    if(a === 0) throw new Error('El coeficiente "a" no puede ser 0 (no sería de segundo grado).');
+    const disc = b*b - 4*a*c;
+    if(disc > 0){
+      const sq = Math.sqrt(disc);
+      return { disc, type:'real2', x1:(-b+sq)/(2*a), x2:(-b-sq)/(2*a) };
+    } else if(disc === 0){
+      return { disc, type:'real1', x1:-b/(2*a) };
+    } else {
+      const sq = Math.sqrt(-disc);
+      return { disc, type:'complex', re:-b/(2*a), im:sq/(2*a) };
+    }
+  }
+
+  document.getElementById('btnQuadratic').addEventListener('click', () => {
+    const out = document.getElementById('quadraticResult');
+    const a = parseFloat(document.getElementById('quadA').value);
+    const b = parseFloat(document.getElementById('quadB').value);
+    const c = parseFloat(document.getElementById('quadC').value);
+    try {
+      if(isNaN(a) || isNaN(b) || isNaN(c)) throw new Error('Completa los tres coeficientes.');
+      const r = solveQuadratic(a,b,c);
+      let html = '<div>Discriminante (b² − 4ac): ' + fmtNum(r.disc) + '</div>';
+      if(r.type === 'real2'){
+        html += '<div style="margin-top:8px; font-size:16px; font-weight:700;">x₁ = ' + fmtNum(r.x1) + '</div>';
+        html += '<div style="font-size:16px; font-weight:700;">x₂ = ' + fmtNum(r.x2) + '</div>';
+      } else if(r.type === 'real1'){
+        html += '<div style="margin-top:8px; font-size:16px; font-weight:700;">x = ' + fmtNum(r.x1) + ' (raíz doble)</div>';
+      } else {
+        const sign = r.im >= 0 ? '+' : '−';
+        html += '<div style="margin-top:8px; font-size:16px; font-weight:700;">x₁ = ' + fmtNum(r.re) + ' ' + sign + ' ' + fmtNum(Math.abs(r.im)) + 'i</div>';
+        html += '<div style="font-size:16px; font-weight:700;">x₂ = ' + fmtNum(r.re) + ' ' + (sign==='+'?'−':'+') + ' ' + fmtNum(Math.abs(r.im)) + 'i</div>';
+      }
+      out.innerHTML = html;
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  // ---- Vectores ----
+  let vecDim = 2;
+  const vecDim2Btn = document.getElementById('vecDim2');
+  const vecDim3Btn = document.getElementById('vecDim3');
+  const vecZFields = document.querySelectorAll('.vec-z');
+  function setVecDim(d){
+    vecDim = d;
+    vecDim2Btn.classList.toggle('on', d===2);
+    vecDim3Btn.classList.toggle('on', d===3);
+    vecZFields.forEach(f => f.classList.toggle('hidden', d===2));
+    const crossOpt = document.querySelector('#vecOp option[value="cross"]');
+  }
+  vecDim2Btn.addEventListener('click', () => setVecDim(2));
+  vecDim3Btn.addEventListener('click', () => setVecDim(3));
+  setVecDim(2);
+
+  function readVec(prefix){
+    const x = parseFloat(document.getElementById(prefix+'x').value) || 0;
+    const y = parseFloat(document.getElementById(prefix+'y').value) || 0;
+    if(vecDim === 3){
+      const z = parseFloat(document.getElementById(prefix+'z').value) || 0;
+      return [x,y,z];
+    }
+    return [x,y];
+  }
+  function fmtVec(v){ return '(' + v.map(fmtNum).join(', ') + ')'; }
+
+  document.getElementById('btnVector').addEventListener('click', () => {
+    const out = document.getElementById('vectorResult');
+    const A = readVec('vecA');
+    const B = readVec('vecB');
+    const op = document.getElementById('vecOp').value;
+    try {
+      let resultHtml = '';
+      switch(op){
+        case 'add': resultHtml = 'A + B = ' + fmtVec(A.map((v,i)=>v+B[i])); break;
+        case 'sub': resultHtml = 'A − B = ' + fmtVec(A.map((v,i)=>v-B[i])); break;
+        case 'dot': resultHtml = 'A · B = ' + fmtNum(A.reduce((s,v,i)=>s+v*B[i],0)); break;
+        case 'cross': {
+          if(vecDim === 3){
+            const cr = [A[1]*B[2]-A[2]*B[1], A[2]*B[0]-A[0]*B[2], A[0]*B[1]-A[1]*B[0]];
+            resultHtml = 'A × B = ' + fmtVec(cr);
+          } else {
+            const crZ = A[0]*B[1]-A[1]*B[0];
+            resultHtml = 'A × B = ' + fmtNum(crZ) + ' (componente z; en 2D el resultado es escalar)';
+          }
+          break;
+        }
+        case 'magA': resultHtml = '|A| = ' + fmtNum(Math.sqrt(A.reduce((s,v)=>s+v*v,0))); break;
+        case 'magB': resultHtml = '|B| = ' + fmtNum(Math.sqrt(B.reduce((s,v)=>s+v*v,0))); break;
+        case 'angle': {
+          const dotv = A.reduce((s,v,i)=>s+v*B[i],0);
+          const magA = Math.sqrt(A.reduce((s,v)=>s+v*v,0));
+          const magB = Math.sqrt(B.reduce((s,v)=>s+v*v,0));
+          if(magA === 0 || magB === 0) throw new Error('Un vector de magnitud 0 no tiene ángulo definido.');
+          const cosv = Math.max(-1, Math.min(1, dotv/(magA*magB)));
+          resultHtml = 'Ángulo entre A y B = ' + fmtNum(Math.acos(cosv)*180/Math.PI) + '°';
+          break;
+        }
+        case 'unitA': {
+          const m = Math.sqrt(A.reduce((s,v)=>s+v*v,0));
+          if(m === 0) throw new Error('El vector A tiene magnitud 0.');
+          resultHtml = 'Â = ' + fmtVec(A.map(v=>v/m));
+          break;
+        }
+        case 'unitB': {
+          const m = Math.sqrt(B.reduce((s,v)=>s+v*v,0));
+          if(m === 0) throw new Error('El vector B tiene magnitud 0.');
+          resultHtml = 'B̂ = ' + fmtVec(B.map(v=>v/m));
+          break;
+        }
+      }
+      out.innerHTML = '<div style="font-size:16px; font-weight:700;">' + resultHtml + '</div>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  /* ===================== ÁNGULOS EN GRADOS-MINUTOS-SEGUNDOS ===================== */
+  function dmsPartsToDecimal(d,m,s,sign){
+    d = d||0; m = m||0; s = s||0;
+    return sign * (Math.abs(d) + m/60 + s/3600);
+  }
+
+  document.getElementById('btnDecToDms').addEventListener('click', () => {
+    const out = document.getElementById('dmsConvertResult');
+    const v = parseFloat(document.getElementById('dmsDecInput').value);
+    if(isNaN(v)){ out.innerHTML = '<span class="chem-error">Escribe un valor en grados decimales.</span>'; return; }
+    out.innerHTML = '<div style="font-size:16px; font-weight:700;">' + toDMS(v) + '</div>';
+  });
+
+  document.getElementById('btnDmsToDec').addEventListener('click', () => {
+    const out = document.getElementById('dmsConvertResult');
+    const d = parseFloat(document.getElementById('dmsD').value) || 0;
+    const m = parseFloat(document.getElementById('dmsM').value) || 0;
+    const s = parseFloat(document.getElementById('dmsS').value) || 0;
+    const sign = d < 0 ? -1 : 1;
+    const dec = dmsPartsToDecimal(d,m,s,sign);
+    out.innerHTML = '<div style="font-size:16px; font-weight:700;">' + formatNumber(dec) + '°</div>';
+  });
+
+  // ---- Lista de ángulos a sumar/restar ----
+  let angleSign = 1;
+  const angleSignPlus = document.getElementById('angleSignPlus');
+  const angleSignMinus = document.getElementById('angleSignMinus');
+  angleSignPlus.addEventListener('click', () => { angleSign = 1; angleSignPlus.classList.add('on'); angleSignMinus.classList.remove('on'); });
+  angleSignMinus.addEventListener('click', () => { angleSign = -1; angleSignMinus.classList.add('on'); angleSignPlus.classList.remove('on'); });
+
+  let angleList = []; // { sign, d, m, s, decimal }
+
+  function renderAngleChips(){
+    const chips = document.getElementById('angleChips');
+    chips.innerHTML = '';
+    angleList.forEach((a, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      const span = document.createElement('span');
+      span.textContent = (a.sign < 0 ? '−' : '+') + ' ' + toDMS(Math.abs(a.decimal)).replace(/^-/,'');
+      chip.appendChild(span);
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', () => {
+        angleList.splice(idx, 1);
+        renderAngleChips();
+        updateAngleSum();
+      });
+      chip.appendChild(removeBtn);
+      chips.appendChild(chip);
+    });
+  }
+
+  function updateAngleSum(){
+    const out = document.getElementById('angleSumResult');
+    if(angleList.length === 0){ out.innerHTML = ''; return; }
+    const total = angleList.reduce((s,a) => s + a.decimal, 0);
+    out.innerHTML = '<div style="font-size:16px; font-weight:700;">Suma total: ' + formatNumber(total) + '° &nbsp;(' + toDMS(total) + ')</div>';
+  }
+
+  document.getElementById('btnAddAngle').addEventListener('click', () => {
+    const d = parseFloat(document.getElementById('angleD').value) || 0;
+    const m = parseFloat(document.getElementById('angleM').value) || 0;
+    const s = parseFloat(document.getElementById('angleS').value) || 0;
+    if(d === 0 && m === 0 && s === 0) return;
+    const decimal = angleSign * dmsPartsToDecimal(d,m,s,1);
+    angleList.push({ sign: angleSign, d, m, s, decimal });
+    renderAngleChips();
+    updateAngleSum();
+    document.getElementById('angleD').value = '';
+    document.getElementById('angleM').value = '';
+    document.getElementById('angleS').value = '';
+    document.getElementById('angleD').focus();
+  });
+
+  document.getElementById('btnPolygonClosure').addEventListener('click', () => {
+    const out = document.getElementById('polygonResult');
+    const n = parseInt(document.getElementById('polygonN').value);
+    if(isNaN(n) || n < 3){ out.innerHTML = '<span class="chem-error">Ingresa un número de lados válido (mínimo 3).</span>'; return; }
+    if(angleList.length === 0){ out.innerHTML = '<span class="chem-error">Agrega primero los ángulos medidos en la lista de arriba.</span>'; return; }
+    const measured = angleList.reduce((s,a) => s + a.decimal, 0);
+    const theoretical = (n - 2) * 180;
+    const error = measured - theoretical;
+    const correctionPerAngle = -error / n;
+    out.innerHTML =
+      '<table class="chem-table">' +
+      '<tr><td>Suma medida</td><td>' + formatNumber(measured) + '° (' + toDMS(measured) + ')</td></tr>' +
+      '<tr><td>Suma teórica (n−2)×180°</td><td>' + formatNumber(theoretical) + '°</td></tr>' +
+      '<tr><td>Error de cierre</td><td>' + formatNumber(error) + '° (' + toDMS(error) + ')</td></tr>' +
+      '<tr><td>Corrección por ángulo</td><td>' + formatNumber(correctionPerAngle) + '° (' + toDMS(correctionPerAngle) + ')</td></tr>' +
+      '</table>';
+  });
+
+
+
+
+  // initial paint once layout is ready
+  window.addEventListener('load', () => {
+    resultLine.textContent = '\u00A0';
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('sw.js').catch(() => { /* no disponible en archivo local, no pasa nada */ });
+    }
+  });
+})();
+</script>
+</body>
+</html>
