@@ -1,7 +1,7 @@
 {
   "name": "Calculadora Científica",
   "short_name": "Calculadora",
-  "description": "Calculadora científica con estadística, gráficas y conversión de unidades. Funciona sin conexión.",
+  "description": "Calculadora científica con estadística, gráficas, conversión de unidades, química, matemáticas y física. Funciona sin conexión.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

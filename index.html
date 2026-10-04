@@ -297,6 +297,7 @@
     <button class="tab" data-tab="convert">Conversión</button>
     <button class="tab" data-tab="chem">Química</button>
     <button class="tab" data-tab="math">Matemáticas</button>
+    <button class="tab" data-tab="physics">Física</button>
   </div>
 
   <!-- ===================== CALCULATOR ===================== -->
@@ -372,18 +373,68 @@
 
   <!-- ===================== STATISTICS ===================== -->
   <section class="panel" id="panel-stats">
-    <p class="stats-intro">Ingresa tus datos de dos formas: agrégalos uno por uno, o pega/escribe una lista completa separada por comas, espacios o saltos de línea.</p>
-
-    <div class="add-one-row">
-      <input class="field" id="datoInput" type="number" inputmode="decimal" placeholder="Escribe un número">
-      <button class="add-btn" id="btnAddDato">Agregar</button>
+    <div class="subtabs">
+      <button class="subtab active" data-statsubtab="descriptive">Descriptiva</button>
+      <button class="subtab" data-statsubtab="distributions">Distribuciones</button>
     </div>
-    <div class="chips" id="statsChips"></div>
 
-    <textarea id="statsInput" placeholder="Ej: 4, 8, 15, 16, 23, 42"></textarea>
-    <button class="action-btn" id="btnCalcStats">Calcular estadísticas</button>
-    <div class="stats-grid" id="statsGrid"></div>
-    <p class="stat-note" id="statsNote"></p>
+    <div class="subpanel active" id="statsubpanel-descriptive">
+      <p class="stats-intro">Ingresa tus datos de dos formas: agrégalos uno por uno, o pega/escribe una lista completa separada por comas, espacios o saltos de línea.</p>
+
+      <div class="add-one-row">
+        <input class="field" id="datoInput" type="number" inputmode="decimal" placeholder="Escribe un número">
+        <button class="add-btn" id="btnAddDato">Agregar</button>
+      </div>
+      <div class="chips" id="statsChips"></div>
+
+      <textarea id="statsInput" placeholder="Ej: 4, 8, 15, 16, 23, 42"></textarea>
+      <button class="action-btn" id="btnCalcStats">Calcular estadísticas</button>
+      <div class="stats-grid" id="statsGrid"></div>
+      <p class="stat-note" id="statsNote"></p>
+    </div>
+
+    <div class="subpanel" id="statsubpanel-distributions">
+      <span class="field-label">Distribución</span>
+      <select class="field" id="distType">
+        <option value="binomial">Binomial</option>
+        <option value="poisson">Poisson</option>
+        <option value="normal">Normal</option>
+        <option value="exponential">Exponencial</option>
+      </select>
+
+      <div id="distFieldsBinomial" class="dist-fields">
+        <div class="tri-grid three" style="margin-top:10px;">
+          <div><span class="field-label">n (ensayos)</span><input class="field" id="binN" type="number" value="10"></div>
+          <div><span class="field-label">p (éxito)</span><input class="field" id="binP" type="number" value="0.5" step="0.01"></div>
+          <div><span class="field-label">x</span><input class="field" id="binX" type="number" value="5"></div>
+        </div>
+      </div>
+
+      <div id="distFieldsPoisson" class="dist-fields" style="display:none;">
+        <div class="tri-grid" style="grid-template-columns:1fr 1fr; margin-top:10px;">
+          <div><span class="field-label">λ (media)</span><input class="field" id="poisLambda" type="number" value="4"></div>
+          <div><span class="field-label">x</span><input class="field" id="poisX" type="number" value="2"></div>
+        </div>
+      </div>
+
+      <div id="distFieldsNormal" class="dist-fields" style="display:none;">
+        <div class="tri-grid three" style="margin-top:10px;">
+          <div><span class="field-label">μ (media)</span><input class="field" id="normMu" type="number" value="0"></div>
+          <div><span class="field-label">σ (desv. est.)</span><input class="field" id="normSigma" type="number" value="1"></div>
+          <div><span class="field-label">x</span><input class="field" id="normX" type="number" value="0"></div>
+        </div>
+      </div>
+
+      <div id="distFieldsExponential" class="dist-fields" style="display:none;">
+        <div class="tri-grid" style="grid-template-columns:1fr 1fr; margin-top:10px;">
+          <div><span class="field-label">λ (tasa)</span><input class="field" id="expLambda" type="number" value="0.5"></div>
+          <div><span class="field-label">x</span><input class="field" id="expX" type="number" value="2"></div>
+        </div>
+      </div>
+
+      <button class="action-btn" id="btnCalcDist">Calcular</button>
+      <div class="chem-result" id="distResult"></div>
+    </div>
   </section>
 
   <!-- ===================== GRAPH ===================== -->
@@ -584,6 +635,114 @@
       <div class="chem-result" id="polygonResult"></div>
     </div>
   </section>
+
+  <!-- ===================== PHYSICS ===================== -->
+  <section class="panel" id="panel-physics">
+    <div class="subtabs">
+      <button class="subtab active" data-physubtab="mru">MRU</button>
+      <button class="subtab" data-physubtab="mrua">MRUA</button>
+      <button class="subtab" data-physubtab="vertical">Vertical</button>
+      <button class="subtab" data-physubtab="parabolico">Parabólico</button>
+    </div>
+
+    <!-- MRU -->
+    <div class="subpanel active" id="physubpanel-mru">
+      <p class="stats-intro">Movimiento Rectilíneo Uniforme: d = v·t. Llena 2 de los 3 valores.</p>
+      <div class="tri-grid three">
+        <div><span class="field-label">Distancia (d)</span><input class="field" id="mruD" type="number" placeholder="d"></div>
+        <div><span class="field-label">Velocidad (v)</span><input class="field" id="mruV" type="number" placeholder="v"></div>
+        <div><span class="field-label">Tiempo (t)</span><input class="field" id="mruT" type="number" placeholder="t"></div>
+      </div>
+      <button class="action-btn" id="btnMru">Resolver</button>
+      <div class="chem-result" id="mruResult"></div>
+    </div>
+
+    <!-- MRUA -->
+    <div class="subpanel" id="physubpanel-mrua">
+      <p class="stats-intro">Movimiento Rectilíneo Uniformemente Acelerado. Llena exactamente 3 de estos 5 valores (velocidad inicial u, velocidad final v, aceleración a, tiempo t, distancia s).</p>
+      <div class="tri-grid" style="grid-template-columns:repeat(2,1fr);">
+        <div><span class="field-label">u (vel. inicial)</span><input class="field" id="mruaU" type="number" placeholder="u"></div>
+        <div><span class="field-label">v (vel. final)</span><input class="field" id="mruaV" type="number" placeholder="v"></div>
+        <div><span class="field-label">a (aceleración)</span><input class="field" id="mruaA" type="number" placeholder="a"></div>
+        <div><span class="field-label">t (tiempo)</span><input class="field" id="mruaT" type="number" placeholder="t"></div>
+        <div><span class="field-label">s (distancia)</span><input class="field" id="mruaS" type="number" placeholder="s"></div>
+      </div>
+      <button class="action-btn" id="btnMrua">Resolver</button>
+      <div class="chem-result" id="mruaResult"></div>
+    </div>
+
+    <!-- VERTICAL -->
+    <div class="subpanel" id="physubpanel-vertical">
+      <span class="field-label">Tipo de movimiento</span>
+      <select class="field" id="vertType">
+        <option value="libre">Caída libre</option>
+        <option value="ascendente">Lanzamiento vertical hacia arriba</option>
+        <option value="descendente">Lanzamiento vertical hacia abajo</option>
+      </select>
+      <div class="field-label" style="margin-top:8px;">g (gravedad, m/s²)</div>
+      <input class="field" id="vertG" type="number" value="9.8">
+
+      <div id="vertFieldsLibre" class="dist-fields">
+        <p class="stats-intro" style="margin-top:10px;">Llena la altura (h) o el tiempo (t); calculamos el otro y la velocidad final.</p>
+        <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+          <div><span class="field-label">Altura (h)</span><input class="field" id="vlH" type="number" placeholder="h"></div>
+          <div><span class="field-label">Tiempo (t)</span><input class="field" id="vlT" type="number" placeholder="t"></div>
+        </div>
+      </div>
+
+      <div id="vertFieldsAscendente" class="dist-fields" style="display:none;">
+        <p class="stats-intro" style="margin-top:10px;">Llena la velocidad inicial (v₀) o la altura máxima; calculamos el resto.</p>
+        <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+          <div><span class="field-label">Vel. inicial (v₀)</span><input class="field" id="vaV0" type="number" placeholder="v0"></div>
+          <div><span class="field-label">Altura máxima</span><input class="field" id="vaHmax" type="number" placeholder="hmax"></div>
+        </div>
+      </div>
+
+      <div id="vertFieldsDescendente" class="dist-fields" style="display:none;">
+        <p class="stats-intro" style="margin-top:10px;">Da la velocidad inicial (v₀) hacia abajo, y la altura (h) o el tiempo (t).</p>
+        <div class="tri-grid three">
+          <div><span class="field-label">Vel. inicial (v₀)</span><input class="field" id="vdV0" type="number" placeholder="v0"></div>
+          <div><span class="field-label">Altura (h)</span><input class="field" id="vdH" type="number" placeholder="h"></div>
+          <div><span class="field-label">Tiempo (t)</span><input class="field" id="vdT" type="number" placeholder="t"></div>
+        </div>
+      </div>
+
+      <button class="action-btn" id="btnVertical">Calcular</button>
+      <div class="chem-result" id="verticalResult"></div>
+    </div>
+
+    <!-- PARABÓLICO -->
+    <div class="subpanel" id="physubpanel-parabolico">
+      <div class="mode-row" style="margin:2px 4px 10px;">
+        <div class="mode-badges">
+          <button class="badge on" id="paraCompleto">Completo</button>
+          <button class="badge" id="paraSemi">Semiparabólico</button>
+        </div>
+      </div>
+
+      <div id="paraFieldsCompleto" class="dist-fields">
+        <p class="stats-intro">Lanzamiento con ángulo. Velocidad inicial, ángulo, altura inicial (0 si parte del suelo).</p>
+        <div class="tri-grid" style="grid-template-columns:repeat(2,1fr);">
+          <div><span class="field-label">Vel. inicial (v₀)</span><input class="field" id="pcV0" type="number" value="20"></div>
+          <div><span class="field-label">Ángulo (°)</span><input class="field" id="pcAngle" type="number" value="45"></div>
+          <div><span class="field-label">Altura inicial (h₀)</span><input class="field" id="pcH0" type="number" value="0"></div>
+          <div><span class="field-label">g (m/s²)</span><input class="field" id="pcG" type="number" value="9.8"></div>
+        </div>
+      </div>
+
+      <div id="paraFieldsSemi" class="dist-fields" style="display:none;">
+        <p class="stats-intro">Lanzamiento horizontal desde una altura (ángulo = 0°).</p>
+        <div class="tri-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div><span class="field-label">Vel. horizontal (v₀)</span><input class="field" id="psV0" type="number" value="15"></div>
+          <div><span class="field-label">Altura inicial (h₀)</span><input class="field" id="psH0" type="number" value="20"></div>
+          <div><span class="field-label">g (m/s²)</span><input class="field" id="psG" type="number" value="9.8"></div>
+        </div>
+      </div>
+
+      <button class="action-btn" id="btnParabolico">Calcular</button>
+      <div class="chem-result" id="parabolicoResult"></div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -770,7 +929,8 @@
     graph: document.getElementById('panel-graph'),
     convert: document.getElementById('panel-convert'),
     chem: document.getElementById('panel-chem'),
-    math: document.getElementById('panel-math')
+    math: document.getElementById('panel-math'),
+    physics: document.getElementById('panel-physics')
   };
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -1024,6 +1184,152 @@
       grid.appendChild(div);
     });
   });
+
+  /* ===================== DISTRIBUCIONES DE PROBABILIDAD ===================== */
+  document.querySelectorAll('[data-statsubtab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-statsubtab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#panel-stats .subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('statsubpanel-' + btn.dataset.statsubtab).classList.add('active');
+    });
+  });
+
+  // lgamma (aproximación de Lanczos) -> permite combinatoria y Poisson estables para n/x grandes
+  function lgamma(x){
+    const g = 7;
+    const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+      771.32342877765313, -176.61502916214059, 12.507343278686905,
+      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if(x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI*x)) - lgamma(1-x);
+    x -= 1;
+    let a = c[0];
+    const t = x + g + 0.5;
+    for(let i=1; i<g+2; i++) a += c[i]/(x+i);
+    return 0.5*Math.log(2*Math.PI) + (x+0.5)*Math.log(t) - t + Math.log(a);
+  }
+  function logChoose(n,k){ return lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1); }
+
+  function binomialPMF(n,p,x){
+    if(x<0 || x>n) return 0;
+    const C = Math.exp(logChoose(n,x));
+    return C * Math.pow(p,x) * Math.pow(1-p, n-x);
+  }
+  function binomialCDF(n,p,x){
+    let s=0; for(let k=0;k<=Math.floor(x);k++) s += binomialPMF(n,p,k);
+    return s;
+  }
+  function poissonPMF(lambda,x){
+    if(x<0) return 0;
+    if(x===0) return Math.exp(-lambda);
+    return Math.exp(-lambda + x*Math.log(lambda) - lgamma(x+1));
+  }
+  function poissonCDF(lambda,x){
+    let s=0; for(let k=0;k<=Math.floor(x);k++) s += poissonPMF(lambda,k);
+    return s;
+  }
+  function erf(x){
+    const sign = x<0 ? -1:1; x=Math.abs(x);
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const t=1/(1+p*x);
+    const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+    return sign*y;
+  }
+  function normalCDF(x,mu,sigma){ return 0.5*(1+erf((x-mu)/(sigma*Math.sqrt(2)))); }
+  function normalPDF(x,mu,sigma){ return (1/(sigma*Math.sqrt(2*Math.PI)))*Math.exp(-((x-mu)**2)/(2*sigma*sigma)); }
+  function exponentialPDF(lambda,x){ return x<0?0:lambda*Math.exp(-lambda*x); }
+  function exponentialCDF(lambda,x){ return x<0?0:1-Math.exp(-lambda*x); }
+
+  const distTypeSelect = document.getElementById('distType');
+  const distFieldsMap = {
+    binomial: document.getElementById('distFieldsBinomial'),
+    poisson: document.getElementById('distFieldsPoisson'),
+    normal: document.getElementById('distFieldsNormal'),
+    exponential: document.getElementById('distFieldsExponential')
+  };
+  distTypeSelect.addEventListener('change', () => {
+    Object.entries(distFieldsMap).forEach(([k, el2]) => { el2.style.display = (k === distTypeSelect.value) ? '' : 'none'; });
+    document.getElementById('distResult').innerHTML = '';
+  });
+
+  document.getElementById('btnCalcDist').addEventListener('click', () => {
+    const out = document.getElementById('distResult');
+    const type = distTypeSelect.value;
+    try {
+      let rows = [];
+      if(type === 'binomial'){
+        const n = parseInt(document.getElementById('binN').value);
+        const p = parseFloat(document.getElementById('binP').value);
+        const x = parseInt(document.getElementById('binX').value);
+        if(isNaN(n) || isNaN(p) || isNaN(x)) throw new Error('Completa n, p y x.');
+        if(p < 0 || p > 1) throw new Error('p debe estar entre 0 y 1.');
+        if(x < 0 || x > n) throw new Error('x debe estar entre 0 y n.');
+        const pmf = binomialPMF(n,p,x);
+        const cdf = binomialCDF(n,p,x);
+        rows = [
+          ['P(X = ' + x + ')', formatNumber(pmf)],
+          ['P(X ≤ ' + x + ')', formatNumber(cdf)],
+          ['P(X ≥ ' + x + ')', formatNumber(1 - cdf + pmf)],
+          ['Media (np)', formatNumber(n*p)],
+          ['Varianza (np(1−p))', formatNumber(n*p*(1-p))],
+          ['Desv. estándar', formatNumber(Math.sqrt(n*p*(1-p)))]
+        ];
+      } else if(type === 'poisson'){
+        const lambda = parseFloat(document.getElementById('poisLambda').value);
+        const x = parseInt(document.getElementById('poisX').value);
+        if(isNaN(lambda) || isNaN(x)) throw new Error('Completa λ y x.');
+        if(lambda < 0) throw new Error('λ debe ser ≥ 0.');
+        if(x < 0) throw new Error('x debe ser ≥ 0.');
+        const pmf = poissonPMF(lambda,x);
+        const cdf = poissonCDF(lambda,x);
+        rows = [
+          ['P(X = ' + x + ')', formatNumber(pmf)],
+          ['P(X ≤ ' + x + ')', formatNumber(cdf)],
+          ['P(X ≥ ' + x + ')', formatNumber(1 - cdf + pmf)],
+          ['Media (λ)', formatNumber(lambda)],
+          ['Varianza (λ)', formatNumber(lambda)]
+        ];
+      } else if(type === 'normal'){
+        const mu = parseFloat(document.getElementById('normMu').value);
+        const sigma = parseFloat(document.getElementById('normSigma').value);
+        const x = parseFloat(document.getElementById('normX').value);
+        if(isNaN(mu) || isNaN(sigma) || isNaN(x)) throw new Error('Completa μ, σ y x.');
+        if(sigma <= 0) throw new Error('σ debe ser mayor que 0.');
+        const pdf = normalPDF(x,mu,sigma);
+        const cdf = normalCDF(x,mu,sigma);
+        const z = (x-mu)/sigma;
+        rows = [
+          ['Valor z', formatNumber(z)],
+          ['f(x) — densidad', formatNumber(pdf)],
+          ['P(X ≤ ' + x + ')', formatNumber(cdf)],
+          ['P(X ≥ ' + x + ')', formatNumber(1-cdf)],
+          ['Media (μ)', formatNumber(mu)],
+          ['Desv. estándar (σ)', formatNumber(sigma)]
+        ];
+      } else if(type === 'exponential'){
+        const lambda = parseFloat(document.getElementById('expLambda').value);
+        const x = parseFloat(document.getElementById('expX').value);
+        if(isNaN(lambda) || isNaN(x)) throw new Error('Completa λ y x.');
+        if(lambda <= 0) throw new Error('λ debe ser mayor que 0.');
+        if(x < 0) throw new Error('x debe ser ≥ 0.');
+        const pdf = exponentialPDF(lambda,x);
+        const cdf = exponentialCDF(lambda,x);
+        rows = [
+          ['f(x) — densidad', formatNumber(pdf)],
+          ['P(X ≤ ' + x + ')', formatNumber(cdf)],
+          ['P(X ≥ ' + x + ')', formatNumber(1-cdf)],
+          ['Media (1/λ)', formatNumber(1/lambda)],
+          ['Desv. estándar (1/λ)', formatNumber(1/lambda)]
+        ];
+      }
+      out.innerHTML = '<table class="chem-table">' +
+        rows.map(([l,v]) => '<tr><td>'+l+'</td><td>'+v+'</td></tr>').join('') +
+        '</table>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
 
   /* ===================== GRAPH ===================== */
   const canvas = document.getElementById('graphCanvas');
@@ -2039,6 +2345,231 @@
 
 
 
+
+
+  /* ===================== FÍSICA ===================== */
+  document.querySelectorAll('[data-physubtab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-physubtab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#panel-physics .subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('physubpanel-' + btn.dataset.physubtab).classList.add('active');
+    });
+  });
+
+  // ---- MRU ----
+  document.getElementById('btnMru').addEventListener('click', () => {
+    const out = document.getElementById('mruResult');
+    const val = id => { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); };
+    let d = val('mruD'), v = val('mruV'), t = val('mruT');
+    const known = [d,v,t].filter(x => x != null).length;
+    try {
+      if(known !== 2) throw new Error('Ingresa exactamente 2 de los 3 valores (d, v, t).');
+      if(d == null) d = v*t;
+      else if(v == null) { if(t===0) throw new Error('El tiempo no puede ser 0.'); v = d/t; }
+      else { if(v===0) throw new Error('La velocidad no puede ser 0.'); t = d/v; }
+      out.innerHTML = '<table class="chem-table">' +
+        '<tr><td>Distancia (d)</td><td>' + fmtNum(d) + '</td></tr>' +
+        '<tr><td>Velocidad (v)</td><td>' + fmtNum(v) + '</td></tr>' +
+        '<tr><td>Tiempo (t)</td><td>' + fmtNum(t) + '</td></tr>' +
+        '</table>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  // ---- MRUA (solver general de 5 variables, estilo SUVAT) ----
+  function solveMRUA(vals){
+    let {u,v,a,t,s} = vals;
+    const known = {u,v,a,t,s};
+    const keys = Object.keys(known).filter(k => known[k] != null);
+    if(keys.length !== 3) throw new Error('Ingresa exactamente 3 valores conocidos (de u, v, a, t, s).');
+    const has = k => known[k] != null;
+
+    if(has('u')&&has('v')&&has('a')){
+      if(a===0) throw new Error('Con aceleración 0, usa la pestaña MRU.');
+      t = (v-u)/a; s = ((u+v)/2)*t;
+    } else if(has('u')&&has('v')&&has('t')){
+      if(t===0) throw new Error('El tiempo no puede ser 0.');
+      a = (v-u)/t; s = ((u+v)/2)*t;
+    } else if(has('u')&&has('v')&&has('s')){
+      if(u+v===0) throw new Error('No se puede despejar con estos datos (u+v=0).');
+      t = 2*s/(u+v); a = (v-u)/t;
+    } else if(has('u')&&has('a')&&has('t')){
+      v = u + a*t; s = u*t + 0.5*a*t*t;
+    } else if(has('u')&&has('a')&&has('s')){
+      const disc = u*u + 2*a*s;
+      if(disc < 0) throw new Error('No hay solución real con estos datos.');
+      v = Math.sqrt(disc);
+      if(a !== 0) t = (v-u)/a; else { if(u===0) throw new Error('Datos insuficientes.'); t = s/u; }
+    } else if(has('u')&&has('t')&&has('s')){
+      if(t===0) throw new Error('El tiempo no puede ser 0.');
+      a = 2*(s-u*t)/(t*t); v = u+a*t;
+    } else if(has('v')&&has('a')&&has('t')){
+      u = v-a*t; s = v*t - 0.5*a*t*t;
+    } else if(has('v')&&has('a')&&has('s')){
+      const disc = v*v - 2*a*s;
+      if(disc < 0) throw new Error('No hay solución real con estos datos.');
+      u = Math.sqrt(disc);
+      if(a !== 0) t = (v-u)/a; else { if(v===0) throw new Error('Datos insuficientes.'); t = s/v; }
+    } else if(has('v')&&has('t')&&has('s')){
+      if(t===0) throw new Error('El tiempo no puede ser 0.');
+      u = 2*s/t - v; a = (v-u)/t;
+    } else if(has('a')&&has('t')&&has('s')){
+      if(t===0) throw new Error('El tiempo no puede ser 0.');
+      u = (s - 0.5*a*t*t)/t; v = u + a*t;
+    } else {
+      throw new Error('Esa combinación de datos no permite resolver el sistema.');
+    }
+    return {u,v,a,t,s};
+  }
+
+  document.getElementById('btnMrua').addEventListener('click', () => {
+    const out = document.getElementById('mruaResult');
+    const val = id => { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); };
+    try {
+      const r = solveMRUA({ u: val('mruaU'), v: val('mruaV'), a: val('mruaA'), t: val('mruaT'), s: val('mruaS') });
+      out.innerHTML = '<table class="chem-table">' +
+        '<tr><td>u (vel. inicial)</td><td>' + fmtNum(r.u) + '</td></tr>' +
+        '<tr><td>v (vel. final)</td><td>' + fmtNum(r.v) + '</td></tr>' +
+        '<tr><td>a (aceleración)</td><td>' + fmtNum(r.a) + '</td></tr>' +
+        '<tr><td>t (tiempo)</td><td>' + fmtNum(r.t) + '</td></tr>' +
+        '<tr><td>s (distancia)</td><td>' + fmtNum(r.s) + '</td></tr>' +
+        '</table>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  // ---- Movimiento vertical ----
+  const vertType = document.getElementById('vertType');
+  const vertFieldsMap = {
+    libre: document.getElementById('vertFieldsLibre'),
+    ascendente: document.getElementById('vertFieldsAscendente'),
+    descendente: document.getElementById('vertFieldsDescendente')
+  };
+  vertType.addEventListener('change', () => {
+    Object.entries(vertFieldsMap).forEach(([k, el2]) => { el2.style.display = (k === vertType.value) ? '' : 'none'; });
+    document.getElementById('verticalResult').innerHTML = '';
+  });
+
+  document.getElementById('btnVertical').addEventListener('click', () => {
+    const out = document.getElementById('verticalResult');
+    const val = id => { const v = document.getElementById(id).value; return v === '' ? null : parseFloat(v); };
+    const g = val('vertG') || 9.8;
+    try {
+      if(vertType.value === 'libre'){
+        let h = val('vlH'), t = val('vlT');
+        if(h == null && t == null) throw new Error('Ingresa la altura o el tiempo.');
+        if(h == null) h = 0.5*g*t*t;
+        else if(t == null) t = Math.sqrt(2*h/g);
+        const v = g*t;
+        out.innerHTML = '<table class="chem-table">' +
+          '<tr><td>Altura (h)</td><td>' + fmtNum(h) + ' m</td></tr>' +
+          '<tr><td>Tiempo (t)</td><td>' + fmtNum(t) + ' s</td></tr>' +
+          '<tr><td>Velocidad final (v)</td><td>' + fmtNum(v) + ' m/s</td></tr>' +
+          '</table>';
+      } else if(vertType.value === 'ascendente'){
+        let v0 = val('vaV0'), hMax = val('vaHmax');
+        if(v0 == null && hMax == null) throw new Error('Ingresa la velocidad inicial o la altura máxima.');
+        if(v0 == null) v0 = Math.sqrt(2*g*hMax);
+        else hMax = (v0*v0)/(2*g);
+        const tSubida = v0/g;
+        const tVuelo = 2*v0/g;
+        out.innerHTML = '<table class="chem-table">' +
+          '<tr><td>Velocidad inicial (v₀)</td><td>' + fmtNum(v0) + ' m/s</td></tr>' +
+          '<tr><td>Altura máxima</td><td>' + fmtNum(hMax) + ' m</td></tr>' +
+          '<tr><td>Tiempo de subida</td><td>' + fmtNum(tSubida) + ' s</td></tr>' +
+          '<tr><td>Tiempo total de vuelo</td><td>' + fmtNum(tVuelo) + ' s</td></tr>' +
+          '<tr><td>Velocidad al regresar</td><td>' + fmtNum(-v0) + ' m/s</td></tr>' +
+          '</table>';
+      } else {
+        let v0 = val('vdV0'), h = val('vdH'), t = val('vdT');
+        if(v0 == null) throw new Error('Ingresa la velocidad inicial hacia abajo.');
+        if(h == null && t == null) throw new Error('Ingresa la altura o el tiempo.');
+        if(t == null){
+          const disc = v0*v0 + 2*g*h;
+          t = (-v0 + Math.sqrt(disc)) / g;
+        } else if(h == null){
+          h = v0*t + 0.5*g*t*t;
+        }
+        const vFinal = v0 + g*t;
+        out.innerHTML = '<table class="chem-table">' +
+          '<tr><td>Velocidad inicial (v₀)</td><td>' + fmtNum(v0) + ' m/s</td></tr>' +
+          '<tr><td>Altura (h)</td><td>' + fmtNum(h) + ' m</td></tr>' +
+          '<tr><td>Tiempo (t)</td><td>' + fmtNum(t) + ' s</td></tr>' +
+          '<tr><td>Velocidad final</td><td>' + fmtNum(vFinal) + ' m/s</td></tr>' +
+          '</table>';
+      }
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  // ---- Movimiento parabólico ----
+  let paraMode = 'completo';
+  const paraCompletoBtn = document.getElementById('paraCompleto');
+  const paraSemiBtn = document.getElementById('paraSemi');
+  const paraFieldsCompleto = document.getElementById('paraFieldsCompleto');
+  const paraFieldsSemi = document.getElementById('paraFieldsSemi');
+  function setParaMode(m){
+    paraMode = m;
+    paraCompletoBtn.classList.toggle('on', m==='completo');
+    paraSemiBtn.classList.toggle('on', m==='semi');
+    paraFieldsCompleto.style.display = m==='completo' ? '' : 'none';
+    paraFieldsSemi.style.display = m==='semi' ? '' : 'none';
+    document.getElementById('parabolicoResult').innerHTML = '';
+  }
+  paraCompletoBtn.addEventListener('click', () => setParaMode('completo'));
+  paraSemiBtn.addEventListener('click', () => setParaMode('semi'));
+
+  document.getElementById('btnParabolico').addEventListener('click', () => {
+    const out = document.getElementById('parabolicoResult');
+    try {
+      if(paraMode === 'completo'){
+        const v0 = parseFloat(document.getElementById('pcV0').value);
+        const thetaDeg = parseFloat(document.getElementById('pcAngle').value);
+        const h0 = parseFloat(document.getElementById('pcH0').value) || 0;
+        const g = parseFloat(document.getElementById('pcG').value) || 9.8;
+        if(isNaN(v0) || isNaN(thetaDeg)) throw new Error('Completa la velocidad inicial y el ángulo.');
+        const theta = thetaDeg * Math.PI/180;
+        const vx = v0*Math.cos(theta);
+        const vy0 = v0*Math.sin(theta);
+        const disc = vy0*vy0 + 2*g*h0;
+        if(disc < 0) throw new Error('Datos no físicos (revisa la altura inicial).');
+        const tVuelo = (vy0 + Math.sqrt(disc))/g;
+        const hMax = h0 + (vy0*vy0)/(2*g);
+        const alcance = vx*tVuelo;
+        out.innerHTML = '<table class="chem-table">' +
+          '<tr><td>Componente horizontal (vₓ)</td><td>' + fmtNum(vx) + ' m/s</td></tr>' +
+          '<tr><td>Componente vertical inicial (v_y0)</td><td>' + fmtNum(vy0) + ' m/s</td></tr>' +
+          '<tr><td>Altura máxima</td><td>' + fmtNum(hMax) + ' m</td></tr>' +
+          '<tr><td>Tiempo de vuelo</td><td>' + fmtNum(tVuelo) + ' s</td></tr>' +
+          '<tr><td>Alcance horizontal</td><td>' + fmtNum(alcance) + ' m</td></tr>' +
+          '</table>';
+      } else {
+        const v0 = parseFloat(document.getElementById('psV0').value);
+        const h0 = parseFloat(document.getElementById('psH0').value);
+        const g = parseFloat(document.getElementById('psG').value) || 9.8;
+        if(isNaN(v0) || isNaN(h0)) throw new Error('Completa la velocidad horizontal y la altura inicial.');
+        if(h0 < 0) throw new Error('La altura inicial debe ser ≥ 0.');
+        const t = Math.sqrt(2*h0/g);
+        const alcance = v0*t;
+        const vy = g*t;
+        const vFinal = Math.sqrt(v0*v0+vy*vy);
+        const anguloImpacto = Math.atan(vy/v0)*180/Math.PI;
+        out.innerHTML = '<table class="chem-table">' +
+          '<tr><td>Tiempo de caída</td><td>' + fmtNum(t) + ' s</td></tr>' +
+          '<tr><td>Alcance horizontal</td><td>' + fmtNum(alcance) + ' m</td></tr>' +
+          '<tr><td>Velocidad vertical final</td><td>' + fmtNum(vy) + ' m/s</td></tr>' +
+          '<tr><td>Velocidad resultante final</td><td>' + fmtNum(vFinal) + ' m/s</td></tr>' +
+          '<tr><td>Ángulo de impacto</td><td>' + fmtNum(anguloImpacto) + '°</td></tr>' +
+          '</table>';
+      }
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
 
   // initial paint once layout is ready
   window.addEventListener('load', () => {
