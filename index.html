@@ -492,6 +492,7 @@
       <button class="subtab active" data-subtab="molar">Masa molar</button>
       <button class="subtab" data-subtab="econfig">Config. electrónica</button>
       <button class="subtab" data-subtab="balance">Balanceo</button>
+      <button class="subtab" data-subtab="stoich">Estequiometría</button>
     </div>
 
     <div class="subpanel active" id="subpanel-molar">
@@ -513,6 +514,38 @@
       <input class="field" id="balanceInput" type="text" placeholder="Ej: Fe + O2 -> Fe2O3" autocomplete="off" spellcheck="false" value="Fe + O2 -> Fe2O3">
       <button class="action-btn" id="btnBalance">Balancear ecuación</button>
       <div class="chem-result" id="balanceResult"></div>
+    </div>
+
+    <div class="subpanel" id="subpanel-stoich">
+      <span class="field-label">Ecuación química (se balancea automáticamente)</span>
+      <input class="field" id="stoichEqInput" type="text" placeholder="Ej: Fe + O2 -> Fe2O3" autocomplete="off" spellcheck="false" value="Fe + O2 -> Fe2O3">
+      <button class="action-btn" id="btnStoichBalance">Balancear y continuar</button>
+      <div class="chem-result" id="stoichBalanceResult"></div>
+
+      <div id="stoichCalcSection" style="display:none;">
+        <hr class="divider">
+        <p class="stats-intro">Conversión mol↔mol / masa↔masa entre dos sustancias de la ecuación:</p>
+        <span class="field-label">Compuesto conocido</span>
+        <select class="field" id="stoichFrom"></select>
+        <div class="tri-grid" style="grid-template-columns:2fr 1fr; margin-top:8px;">
+          <div><span class="field-label">Cantidad</span><input class="field" id="stoichAmount" type="number" value="10"></div>
+          <div><span class="field-label">Unidad</span>
+            <select class="field" id="stoichUnit"><option value="g">gramos</option><option value="mol">moles</option></select>
+          </div>
+        </div>
+        <span class="field-label" style="margin-top:8px; display:block;">Compuesto a calcular</span>
+        <select class="field" id="stoichTo"></select>
+        <button class="action-btn" id="btnStoichCalc">Calcular</button>
+        <div class="chem-result" id="stoichResult"></div>
+
+        <hr class="divider">
+        <p class="stats-intro">Reactivo limitante y rendimiento teórico (da los gramos disponibles de cada reactivo):</p>
+        <div id="stoichReactantInputs"></div>
+        <span class="field-label" style="margin-top:8px; display:block;">Producto a calcular</span>
+        <select class="field" id="stoichProductSelect"></select>
+        <button class="action-btn" id="btnStoichLimiting">Calcular reactivo limitante</button>
+        <div class="chem-result" id="stoichLimitingResult"></div>
+      </div>
     </div>
   </section>
 
@@ -1641,12 +1674,12 @@
   runConversion();
 
   /* ===================== CHEMISTRY ===================== */
-  // Subtabs dentro del panel de química
-  document.querySelectorAll('.subtab').forEach(btn => {
+  // Subtabs dentro del panel de química (delimitado con [data-subtab] para no chocar con los de física/matemáticas/estadística)
+  document.querySelectorAll('[data-subtab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.subtab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('[data-subtab]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('#panel-chem .subpanel').forEach(p => p.classList.remove('active'));
       document.getElementById('subpanel-' + btn.dataset.subtab).classList.add('active');
     });
   });
@@ -1808,6 +1841,13 @@
     if(i !== formula.length) throw new Error('Fórmula mal formada (revisa los paréntesis)');
     if(Object.keys(result).length === 0) throw new Error('Escribe una fórmula, por ejemplo H2O');
     return result;
+  }
+
+  function molarMassOf(formula){
+    const counts = parseChemFormula(formula);
+    let total = 0;
+    for(const sym in counts) total += elementBySymbol[sym].mass * counts[sym];
+    return total;
   }
 
   document.getElementById('btnMolar').addEventListener('click', () => {
@@ -1989,7 +2029,13 @@
       return (coeff === 1 ? '' : coeff) + c;
     }).join(' + ');
 
-    return { equation: leftBalanced + ' \u2192 ' + rightBalanced, coefficients: ints };
+    const compounds = allCompounds.map((c, idx) => ({
+      formula: stripLeadingCoefficient(c),
+      coeff: ints[idx],
+      side: idx < leftCompounds.length ? 'reactivo' : 'producto'
+    }));
+
+    return { equation: leftBalanced + ' \u2192 ' + rightBalanced, coefficients: ints, compounds };
   }
 
   document.getElementById('btnBalance').addEventListener('click', () => {
@@ -2002,6 +2048,131 @@
       out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
     }
   });
+
+  // ---- Estequiometría ----
+  let stoichCompounds = [];
+
+  function formulaLabel(c){
+    return c.formula + ' (' + c.side + ', coef. ' + c.coeff + ')';
+  }
+
+  document.getElementById('btnStoichBalance').addEventListener('click', () => {
+    const out = document.getElementById('stoichBalanceResult');
+    const section = document.getElementById('stoichCalcSection');
+    const raw = document.getElementById('stoichEqInput').value.trim();
+    try {
+      const result = balanceChemEquation(raw);
+      stoichCompounds = result.compounds;
+      out.innerHTML = '<div style="font-size:16px; font-weight:700;">' + result.equation + '</div>';
+
+      const fromSel = document.getElementById('stoichFrom');
+      const toSel = document.getElementById('stoichTo');
+      fromSel.innerHTML = ''; toSel.innerHTML = '';
+      stoichCompounds.forEach(c => {
+        const o1 = document.createElement('option'); o1.value = c.formula; o1.textContent = formulaLabel(c);
+        const o2 = o1.cloneNode(true);
+        fromSel.appendChild(o1); toSel.appendChild(o2);
+      });
+      if(toSel.options.length > 1) toSel.selectedIndex = 1;
+
+      // Reactivo limitante: un input de gramos por cada reactivo
+      const reactants = stoichCompounds.filter(c => c.side === 'reactivo');
+      const reactantInputsDiv = document.getElementById('stoichReactantInputs');
+      reactantInputsDiv.innerHTML = '';
+      reactants.forEach(r => {
+        const wrap = document.createElement('div');
+        wrap.style.marginBottom = '8px';
+        const label = document.createElement('span');
+        label.className = 'field-label';
+        label.textContent = 'Gramos disponibles de ' + r.formula;
+        const input = document.createElement('input');
+        input.className = 'field';
+        input.type = 'number';
+        input.id = 'stoichReact_' + r.formula;
+        input.placeholder = 'g de ' + r.formula;
+        wrap.appendChild(label);
+        wrap.appendChild(input);
+        reactantInputsDiv.appendChild(wrap);
+      });
+
+      const productSel = document.getElementById('stoichProductSelect');
+      productSel.innerHTML = '';
+      stoichCompounds.filter(c => c.side === 'producto').forEach(p => {
+        const o = document.createElement('option'); o.value = p.formula; o.textContent = p.formula;
+        productSel.appendChild(o);
+      });
+
+      section.style.display = '';
+      document.getElementById('stoichResult').innerHTML = '';
+      document.getElementById('stoichLimitingResult').innerHTML = '';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+      section.style.display = 'none';
+    }
+  });
+
+  document.getElementById('btnStoichCalc').addEventListener('click', () => {
+    const out = document.getElementById('stoichResult');
+    try {
+      const fromFormula = document.getElementById('stoichFrom').value;
+      const toFormula = document.getElementById('stoichTo').value;
+      const amount = parseFloat(document.getElementById('stoichAmount').value);
+      const unit = document.getElementById('stoichUnit').value;
+      if(isNaN(amount) || amount < 0) throw new Error('Ingresa una cantidad válida.');
+      const from = stoichCompounds.find(c => c.formula === fromFormula);
+      const to = stoichCompounds.find(c => c.formula === toFormula);
+      const molarFrom = molarMassOf(from.formula);
+      const molarTo = molarMassOf(to.formula);
+      const molesFrom = unit === 'g' ? amount / molarFrom : amount;
+      const molesTo = molesFrom * (to.coeff / from.coeff);
+      const gramsTo = molesTo * molarTo;
+      out.innerHTML = '<table class="chem-table">' +
+        '<tr><td>Moles de ' + from.formula + '</td><td>' + formatNumber(molesFrom) + ' mol</td></tr>' +
+        '<tr><td>Relación molar (' + to.formula + '/' + from.formula + ')</td><td>' + to.coeff + '/' + from.coeff + '</td></tr>' +
+        '<tr><td>Moles de ' + to.formula + '</td><td>' + formatNumber(molesTo) + ' mol</td></tr>' +
+        '<tr><td>Masa de ' + to.formula + '</td><td>' + formatNumber(gramsTo) + ' g</td></tr>' +
+        '</table>';
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
+  document.getElementById('btnStoichLimiting').addEventListener('click', () => {
+    const out = document.getElementById('stoichLimitingResult');
+    try {
+      const reactants = stoichCompounds.filter(c => c.side === 'reactivo');
+      const amounts = {};
+      reactants.forEach(r => {
+        const v = parseFloat(document.getElementById('stoichReact_' + r.formula).value);
+        if(isNaN(v) || v < 0) throw new Error('Ingresa los gramos disponibles de ' + r.formula + '.');
+        amounts[r.formula] = v;
+      });
+      let limiting = null, minRatio = Infinity;
+      const rows = reactants.map(r => {
+        const mm = molarMassOf(r.formula);
+        const moles = amounts[r.formula] / mm;
+        const ratio = moles / r.coeff;
+        if(ratio < minRatio){ minRatio = ratio; limiting = r.formula; }
+        return { formula: r.formula, moles, ratio };
+      });
+      const productFormula = document.getElementById('stoichProductSelect').value;
+      const product = stoichCompounds.find(c => c.formula === productFormula);
+      const molesProduct = minRatio * product.coeff;
+      const gramsProduct = molesProduct * molarMassOf(productFormula);
+
+      let html = '<table class="chem-table">';
+      rows.forEach(r => {
+        html += '<tr><td>' + r.formula + ' disponible</td><td>' + formatNumber(r.moles) + ' mol (ratio ' + formatNumber(r.ratio) + ')</td></tr>';
+      });
+      html += '</table>';
+      html += '<div style="margin-top:10px; font-size:15px; font-weight:700; color:var(--text);">Reactivo limitante: ' + limiting + '</div>';
+      html += '<div style="margin-top:6px;">Rendimiento teórico de ' + productFormula + ': ' + formatNumber(molesProduct) + ' mol = ' + formatNumber(gramsProduct) + ' g</div>';
+      out.innerHTML = html;
+    } catch(e){
+      out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
+    }
+  });
+
 
   /* ===================== MATH TOOLS (triángulos, cuadrática, vectores) ===================== */
   document.querySelectorAll('[data-mathsubtab]').forEach(btn => {
