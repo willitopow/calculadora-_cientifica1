@@ -263,6 +263,24 @@
   .chem-table td{ padding:3px 6px 3px 0; color:var(--text); }
   .chem-table td:last-child{ color:var(--accent); text-align:right; }
 
+
+  /* ---- Topografía / tablas con scroll ---- */
+  .field-area{
+    width:100%; min-height:120px; resize:vertical; background:var(--screen-bg); color:var(--screen-fg);
+    border:1px solid #000; border-radius:10px; padding:10px 12px; font-family:var(--mono); font-size:13px;
+    outline:none; box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+  }
+  .field-area::placeholder{ color:var(--screen-fg-dim); }
+  .scroll-x{ overflow-x:auto; margin-top:8px; -webkit-overflow-scrolling:touch; }
+  .topo-table{ border-collapse:collapse; font-size:12px; width:100%; }
+  .topo-table th{ color:var(--text-dim); font-weight:600; padding:3px 8px; text-align:right; white-space:nowrap; font-family:var(--sans); }
+  .topo-table td{ color:var(--accent); padding:3px 8px; text-align:right; white-space:nowrap; }
+  .topo-table td.fill-c, .fill-c{ color:#ffb86b; }
+  .topo-table td.lbl{ color:var(--text); text-align:left; }
+  .check-row{ display:flex; align-items:flex-start; gap:8px; margin:10px 0 0; font-size:13px; color:var(--text-dim); line-height:1.4; }
+  .check-row input{ margin-top:3px; }
+  .res-title{ margin-top:12px; font-weight:700; color:var(--text); font-family:var(--sans); }
+
   /* ---- Math tools panel ---- */
   .tri-grid{
     display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:4px;
@@ -298,6 +316,7 @@
     <button class="tab" data-tab="chem">Química</button>
     <button class="tab" data-tab="math">Matemáticas</button>
     <button class="tab" data-tab="physics">Física</button>
+    <button class="tab" data-tab="topo">Topografía</button>
   </div>
 
   <!-- ===================== CALCULATOR ===================== -->
@@ -493,6 +512,10 @@
       <button class="subtab" data-subtab="econfig">Config. electrónica</button>
       <button class="subtab" data-subtab="balance">Balanceo</button>
       <button class="subtab" data-subtab="stoich">Estequiometría</button>
+      <button class="subtab" data-subtab="conc">Concentración</button>
+      <button class="subtab" data-subtab="solub">Solubilidad</button>
+      <button class="subtab" data-subtab="dilu">Dilución</button>
+      <button class="subtab" data-subtab="equil">Equilibrio</button>
     </div>
 
     <div class="subpanel active" id="subpanel-molar">
@@ -546,6 +569,99 @@
         <button class="action-btn" id="btnStoichLimiting">Calcular reactivo limitante</button>
         <div class="chem-result" id="stoichLimitingResult"></div>
       </div>
+    </div>
+  
+    <!-- CONCENTRACIÓN -->
+    <div class="subpanel" id="subpanel-conc">
+      <p class="stats-intro">Llena lo que conozcas y se calculan todas las concentraciones posibles: molaridad, molalidad, % m/m, % m/v, ppm, normalidad y fracción molar.</p>
+      <span class="field-label">Fórmula del soluto</span>
+      <input class="field" id="concFormula" type="text" value="NaCl" autocomplete="off" spellcheck="false">
+      <div class="tri-grid" style="grid-template-columns:1fr 1fr; margin-top:8px;">
+        <div><span class="field-label">Masa de soluto (g)</span><input class="field" id="concMass" type="number" placeholder="g"></div>
+        <div><span class="field-label">o moles de soluto</span><input class="field" id="concMoles" type="number" placeholder="mol"></div>
+        <div><span class="field-label">Volumen solución (mL)</span><input class="field" id="concVol" type="number" placeholder="mL"></div>
+        <div><span class="field-label">Masa de solvente (g)</span><input class="field" id="concSolv" type="number" placeholder="g"></div>
+        <div><span class="field-label">Densidad solución (g/mL)</span><input class="field" id="concDens" type="number" placeholder="g/mL"></div>
+        <div><span class="field-label">Equivalentes/mol (normalidad)</span><input class="field" id="concEq" type="number" placeholder="eq/mol"></div>
+      </div>
+      <span class="field-label" style="margin-top:8px; display:block;">Fórmula del solvente (para fracción molar)</span>
+      <input class="field" id="concSolvFormula" type="text" value="H2O" autocomplete="off" spellcheck="false">
+      <button class="action-btn" id="btnConc">Calcular concentraciones</button>
+      <div class="chem-result" id="concResult"></div>
+    </div>
+
+    <!-- SOLUBILIDAD -->
+    <div class="subpanel" id="subpanel-solub">
+      <span class="field-label">Cálculo</span>
+      <select class="field" id="solubMode">
+        <option value="kps">Ksp → solubilidad</option>
+        <option value="s2k">Solubilidad → Ksp</option>
+        <option value="max">Solubilidad (g/100 g) → masa máxima</option>
+      </select>
+      <div id="solubSaltFields">
+        <p class="stats-intro" style="margin-top:10px;">Sal AₘBₙ ⇌ m·A + n·B. Indica m y n (AgCl: 1 y 1; Ca(OH)₂: 1 y 2; Ag₂CrO₄: 2 y 1).</p>
+        <div class="tri-grid three">
+          <div><span class="field-label">m (cationes)</span><input class="field" id="solubM" type="number" value="1"></div>
+          <div><span class="field-label">n (aniones)</span><input class="field" id="solubN" type="number" value="1"></div>
+          <div><span class="field-label">Fórmula (opcional)</span><input class="field" id="solubFormula" type="text" placeholder="AgCl" autocomplete="off" spellcheck="false"></div>
+        </div>
+      </div>
+      <div id="solubKpsFields" style="margin-top:8px;">
+        <span class="field-label">Ksp</span>
+        <input class="field" id="solubKsp" type="number" step="any" placeholder="Ej: 1.8e-10">
+      </div>
+      <div id="solubS2kFields" style="display:none; margin-top:8px;">
+        <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+          <div><span class="field-label">Solubilidad (mol/L)</span><input class="field" id="solubSMol" type="number" step="any" placeholder="mol/L"></div>
+          <div><span class="field-label">o (g/L, con fórmula)</span><input class="field" id="solubSG" type="number" step="any" placeholder="g/L"></div>
+        </div>
+      </div>
+      <div id="solubMaxFields" style="display:none; margin-top:10px;">
+        <div class="tri-grid three">
+          <div><span class="field-label">S (g/100 g)</span><input class="field" id="solubS100" type="number" step="any" placeholder="S"></div>
+          <div><span class="field-label">Solvente (g)</span><input class="field" id="solubSolvent" type="number" step="any" placeholder="g"></div>
+          <div><span class="field-label">Soluto presente (g)</span><input class="field" id="solubPresent" type="number" step="any" placeholder="opcional"></div>
+        </div>
+      </div>
+      <button class="action-btn" id="btnSolub">Calcular</button>
+      <div class="chem-result" id="solubResult"></div>
+    </div>
+
+    <!-- DILUCIÓN -->
+    <div class="subpanel" id="subpanel-dilu">
+      <p class="stats-intro">C₁·V₁ = C₂·V₂. Llena 3 de los 4 valores; usa las mismas unidades para V₁ y V₂, y para C₁ y C₂.</p>
+      <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+        <div><span class="field-label">C₁ (concentración inicial)</span><input class="field" id="diluC1" type="number" step="any"></div>
+        <div><span class="field-label">V₁ (volumen inicial)</span><input class="field" id="diluV1" type="number" step="any"></div>
+        <div><span class="field-label">C₂ (concentración final)</span><input class="field" id="diluC2" type="number" step="any"></div>
+        <div><span class="field-label">V₂ (volumen final)</span><input class="field" id="diluV2" type="number" step="any"></div>
+      </div>
+      <button class="action-btn" id="btnDilu">Calcular dilución</button>
+      <div class="chem-result" id="diluResult"></div>
+    </div>
+
+    <!-- EQUILIBRIO -->
+    <div class="subpanel" id="subpanel-equil">
+      <span class="field-label">Reacción (coeficientes delante; (s) y (l) se excluyen)</span>
+      <input class="field" id="equilEq" type="text" value="N2 + 3H2 &lt;-&gt; 2NH3" autocomplete="off" spellcheck="false">
+      <button class="action-btn" id="btnEquilParse">Leer reacción</button>
+      <div id="equilSection" style="display:none;">
+        <div id="equilRows" style="margin-top:10px;"></div>
+        <span class="field-label">Kc (opcional)</span>
+        <input class="field" id="equilK" type="number" step="any" placeholder="Si lo das, se compara con Q o se despeja la incógnita">
+        <button class="action-btn" id="btnEquilCalc">Calcular Kc / Q / incógnita</button>
+        <div class="chem-result" id="equilResult"></div>
+      </div>
+      <hr class="divider">
+      <p class="stats-intro">Kp ⇄ Kc: Kp = Kc·(R·T)^Δn, con R = 0.082057 L·atm/(mol·K). Llena Kc o Kp.</p>
+      <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+        <div><span class="field-label">Kc</span><input class="field" id="kpKc" type="number" step="any"></div>
+        <div><span class="field-label">Kp</span><input class="field" id="kpKp" type="number" step="any"></div>
+        <div><span class="field-label">T (K)</span><input class="field" id="kpT" type="number" step="any" value="298.15"></div>
+        <div><span class="field-label">Δn (gases)</span><input class="field" id="kpDn" type="number" step="any" value="0"></div>
+      </div>
+      <button class="action-btn" id="btnKp">Convertir Kp ⇄ Kc</button>
+      <div class="chem-result" id="kpResult"></div>
     </div>
   </section>
 
@@ -776,6 +892,61 @@
       <div class="chem-result" id="parabolicoResult"></div>
     </div>
   </section>
+
+  <!-- ===================== TOPOGRAFÍA ===================== -->
+  <section class="panel" id="panel-topo">
+    <div class="subtabs">
+      <button class="subtab active" data-toposubtab="area">Área</button>
+      <button class="subtab" data-toposubtab="volume">Volumen (cuadrícula)</button>
+      <button class="subtab" data-toposubtab="cotas">Cotas de corte</button>
+    </div>
+
+    <!-- ÁREA POR COORDENADAS -->
+    <div class="subpanel active" id="toposubpanel-area">
+      <p class="stats-intro">Un punto por línea, en orden de recorrido (horario o antihorario). No repitas el primer punto al final. Si una línea trae 3 valores (con cota) se usan los 2 primeros.</p>
+      <span class="field-label">Orden de las columnas</span>
+      <select class="field" id="topoAreaOrder">
+        <option value="EN">Este, Norte (X, Y)</option>
+        <option value="NE">Norte, Este (N, E)</option>
+      </select>
+      <textarea class="field-area" id="topoAreaInput" style="margin-top:8px;" placeholder="1000.00 2000.00&#10;1050.25 2000.00&#10;1050.25 2040.80&#10;1000.00 2040.80"></textarea>
+      <button class="action-btn" id="btnTopoArea">Calcular área</button>
+      <div class="chem-result" id="topoAreaResult"></div>
+    </div>
+
+    <!-- VOLUMEN POR CUADRÍCULA -->
+    <div class="subpanel" id="toposubpanel-volume">
+      <p class="stats-intro">Cotas del terreno en los vértices de una cuadrícula. La fila 1 está en el Norte inicial y cada fila siguiente avanza dy (usa dy negativo si bajas hacia el sur); cada columna avanza dx en Este.</p>
+      <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+        <div><span class="field-label">Este inicial (X₀)</span><input class="field" id="topoX0" type="number" step="any" value="0"></div>
+        <div><span class="field-label">Norte inicial (Y₀)</span><input class="field" id="topoY0" type="number" step="any" value="0"></div>
+        <div><span class="field-label">dx (m entre columnas)</span><input class="field" id="topoDx" type="number" step="any" value="10"></div>
+        <div><span class="field-label">dy (m entre filas)</span><input class="field" id="topoDy" type="number" step="any" value="10"></div>
+      </div>
+      <span class="field-label" style="margin-top:8px; display:block;">Cota de diseño (m)</span>
+      <input class="field" id="topoZd" type="number" step="any" placeholder="Ej: 100.50">
+      <span class="field-label" style="margin-top:8px; display:block;">Cotas del terreno (una fila por línea)</span>
+      <textarea class="field-area" id="topoGridInput" placeholder="101.2 100.8 100.1&#10;100.9 100.4 99.7&#10;100.5 100.0 99.2"></textarea>
+      <button class="action-btn" id="btnTopoVolume">Calcular volúmenes</button>
+      <div class="chem-result" id="topoVolumeResult"></div>
+    </div>
+
+    <!-- COTAS DE CORTE -->
+    <div class="subpanel" id="toposubpanel-cotas">
+      <p class="stats-intro">Puntos con su cota, en orden de recorrido. Se calcula la cota de trabajo de cada punto (terreno − diseño) y las coordenadas de los puntos de paso donde el terreno cruza la cota de diseño.</p>
+      <span class="field-label">Orden de las columnas</span>
+      <select class="field" id="topoCotasOrder">
+        <option value="EN">Este, Norte, Cota</option>
+        <option value="NE">Norte, Este, Cota</option>
+      </select>
+      <span class="field-label" style="margin-top:8px; display:block;">Cota de diseño (m)</span>
+      <input class="field" id="topoCotasZd" type="number" step="any" placeholder="Ej: 100.50">
+      <textarea class="field-area" id="topoCotasInput" style="margin-top:8px;" placeholder="1000.00 2000.00 101.20&#10;1020.00 2000.00 100.30&#10;1020.00 2030.00 99.80&#10;1000.00 2030.00 100.90"></textarea>
+      <label class="check-row"><input type="checkbox" id="topoCotasClosed" checked> Polígono cerrado (unir el último con el primero y calcular volumen aproximado)</label>
+      <button class="action-btn" id="btnTopoCotas">Calcular cotas de corte</button>
+      <div class="chem-result" id="topoCotasResult"></div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -963,7 +1134,8 @@
     convert: document.getElementById('panel-convert'),
     chem: document.getElementById('panel-chem'),
     math: document.getElementById('panel-math'),
-    physics: document.getElementById('panel-physics')
+    physics: document.getElementById('panel-physics'),
+    topo: document.getElementById('panel-topo')
   };
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -2740,6 +2912,507 @@
     } catch(e){
       out.innerHTML = '<span class="chem-error">' + e.message + '</span>';
     }
+  });
+
+
+/* ===== NÚCLEO TOPOGRAFÍA ===== */
+function topoParsePoints(text, minNums){
+  const rows = [];
+  text.split(/\r?\n/).forEach(line => {
+    line = line.trim();
+    if(!line) return;
+    let toks;
+    if(/[\s;]/.test(line)){
+      line = line.replace(/,(?=\s|$)/g, ' ').replace(/,/g, '.');
+      toks = line.split(/[\s;]+/).filter(Boolean);
+    } else {
+      toks = line.split(',').filter(Boolean);
+    }
+    let i = 0;
+    while(i < toks.length && !isFinite(Number(toks[i]))) i++;
+    const nums = toks.slice(i).map(Number).filter(n => isFinite(n));
+    if(nums.length >= minNums) rows.push(nums);
+  });
+  return rows;
+}
+
+function topoPolygonStats(pts){
+  const n = pts.length;
+  const x0 = pts[0][0], y0 = pts[0][1];
+  let a2 = 0, cx = 0, cy = 0, per = 0;
+  for(let i=0;i<n;i++){
+    const A = pts[i], B = pts[(i+1)%n];
+    const xi = A[0]-x0, yi = A[1]-y0, xj = B[0]-x0, yj = B[1]-y0;
+    const cr = xi*yj - xj*yi;
+    a2 += cr; cx += (xi+xj)*cr; cy += (yi+yj)*cr;
+    per += Math.hypot(B[0]-A[0], B[1]-A[1]);
+  }
+  const centroid = a2 !== 0 ? [x0 + cx/(3*a2), y0 + cy/(3*a2)] : null;
+  return { area: Math.abs(a2)/2, perimeter: per, centroid, signed: a2/2 };
+}
+
+function topoTri(A, a, b, c){
+  const s = a+b+c;
+  if(a>=0 && b>=0 && c>=0) return { cut:A*s/3, fill:0, aCut:A, aFill:0 };
+  if(a<=0 && b<=0 && c<=0) return { cut:0, fill:-A*s/3, aCut:0, aFill:A };
+  const h = [a,b,c];
+  const pos = h.filter(v => v>0).length;
+  const total = A*s/3;
+  let vPlus, aPlus;
+  if(pos === 1){
+    const i = h.findIndex(v => v>0), hp = h[i], o = h.filter((_,k) => k!==i);
+    const d = (hp-o[0])*(hp-o[1]);
+    vPlus = A*hp*hp*hp/(3*d);
+    aPlus = A*hp*hp/d;
+  } else {
+    const i = h.findIndex(v => v<0), hn = h[i], o = h.filter((_,k) => k!==i);
+    const d = (hn-o[0])*(hn-o[1]);
+    vPlus = total - A*hn*hn*hn/(3*d);
+    aPlus = A - A*hn*hn/d;
+  }
+  return { cut:vPlus, fill:vPlus-total, aCut:aPlus, aFill:A-aPlus };
+}
+
+function topoGridVolume(z, dx, dy, zd){
+  const rows = z.length, cols = z[0].length;
+  const Ac = Math.abs(dx*dy);
+  let cut=0, fill=0, aCut=0, aFill=0, sumAvg=0;
+  for(let j=0;j<rows-1;j++) for(let i=0;i<cols-1;i++){
+    const h1=z[j][i]-zd, h2=z[j][i+1]-zd, h3=z[j+1][i+1]-zd, h4=z[j+1][i]-zd;
+    const hc=(h1+h2+h3+h4)/4;
+    sumAvg += (z[j][i]+z[j][i+1]+z[j+1][i+1]+z[j+1][i])/4;
+    [[h1,h2],[h2,h3],[h3,h4],[h4,h1]].forEach(([p,q]) => {
+      const r = topoTri(Ac/4, p, q, hc);
+      cut+=r.cut; fill+=r.fill; aCut+=r.aCut; aFill+=r.aFill;
+    });
+  }
+  const cells = (rows-1)*(cols-1);
+  return { cut, fill, aCut, aFill, balance:cut-fill, zBalance:sumAvg/cells, cells, area:cells*Ac };
+}
+
+function topoGridZeroPoints(z, x0, y0, dx, dy, zd){
+  const rows=z.length, cols=z[0].length, pts=[];
+  const X = i => x0+i*dx, Y = j => y0+j*dy;
+  for(let j=0;j<rows;j++) for(let i=0;i<cols;i++){
+    const h = z[j][i]-zd;
+    if(Math.abs(h) < 1e-9) pts.push({ x:X(i), y:Y(j), where:'F'+(j+1)+'C'+(i+1)+' (en cota)' });
+    if(i<cols-1){
+      const h2 = z[j][i+1]-zd;
+      if(h*h2 < 0){ const t=h/(h-h2); pts.push({ x:X(i)+t*dx, y:Y(j), where:'F'+(j+1)+'C'+(i+1)+' – F'+(j+1)+'C'+(i+2) }); }
+    }
+    if(j<rows-1){
+      const h2 = z[j+1][i]-zd;
+      if(h*h2 < 0){ const t=h/(h-h2); pts.push({ x:X(i), y:Y(j)+t*dy, where:'F'+(j+1)+'C'+(i+1)+' – F'+(j+2)+'C'+(i+1) }); }
+    }
+  }
+  return pts;
+}
+
+function topoZeroPointsPath(pts, zd, closed){
+  const out=[], n=pts.length, m = closed ? n : n-1;
+  for(let i=0;i<m;i++){
+    const a=pts[i], b=pts[(i+1)%n];
+    const ha=a[2]-zd, hb=b[2]-zd;
+    if(ha*hb < 0){
+      const t = ha/(ha-hb);
+      out.push({ from:i+1, to:((i+1)%n)+1, e:a[0]+t*(b[0]-a[0]), n:a[1]+t*(b[1]-a[1]), dist:t*Math.hypot(b[0]-a[0], b[1]-a[1]) });
+    }
+  }
+  return out;
+}
+
+function topoEarClip(pts){
+  const n = pts.length;
+  const cross = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const inside = (p,a,b,c) => cross(a,b,p)>=0 && cross(b,c,p)>=0 && cross(c,a,p)>=0;
+  let idx = [...Array(n).keys()];
+  let s2 = 0;
+  for(let i=0;i<n;i++){ const A=pts[i], B=pts[(i+1)%n]; s2 += A[0]*B[1]-B[0]*A[1]; }
+  if(s2 < 0) idx.reverse();
+  const tris = [];
+  let guard = 0;
+  while(idx.length > 3 && guard++ < 10000){
+    let clipped = false;
+    for(let k=0;k<idx.length;k++){
+      const ip=idx[(k+idx.length-1)%idx.length], ic=idx[k], inx=idx[(k+1)%idx.length];
+      const a=pts[ip], b=pts[ic], c=pts[inx];
+      if(cross(a,b,c) <= 1e-12) continue;
+      let ok = true;
+      for(const q of idx){ if(q===ip||q===ic||q===inx) continue; if(inside(pts[q],a,b,c)){ ok=false; break; } }
+      if(!ok) continue;
+      tris.push([ip,ic,inx]); idx.splice(k,1); clipped = true; break;
+    }
+    if(!clipped) throw new Error('No se pudo triangular el polígono (¿se cruza consigo mismo?).');
+  }
+  tris.push([idx[0],idx[1],idx[2]]);
+  return tris;
+}
+
+function topoPolyVolume(p3, zd){
+  const tris = topoEarClip(p3.map(p => [p[0],p[1]]));
+  let cut=0, fill=0, aCut=0, aFill=0, area=0;
+  tris.forEach(([i,j,k]) => {
+    const A = Math.abs(((p3[j][0]-p3[i][0])*(p3[k][1]-p3[i][1]) - (p3[k][0]-p3[i][0])*(p3[j][1]-p3[i][1]))/2);
+    const r = topoTri(A, p3[i][2]-zd, p3[j][2]-zd, p3[k][2]-zd);
+    cut+=r.cut; fill+=r.fill; aCut+=r.aCut; aFill+=r.aFill; area+=A;
+  });
+  return { cut, fill, aCut, aFill, area, tris:tris.length, balance:cut-fill };
+}
+
+/* ===== NÚCLEO QUÍMICA (soluciones) ===== */
+function concCompute(o){
+  let mass = o.mass;
+  if(mass == null && o.moles != null) mass = o.moles * o.MM;
+  if(mass == null) throw new Error('Ingresa la masa (g) o los moles del soluto.');
+  const n = mass / o.MM;
+  let vol = o.vol, solv = o.solvMass;
+  if(o.density != null){
+    if(vol != null && solv == null) solv = vol*o.density - mass;
+    else if(solv != null && vol == null) vol = (mass+solv)/o.density;
+  }
+  if(solv != null && solv <= 0) throw new Error('La masa de solvente resultó ≤ 0; revisa volumen, densidad y masa de soluto.');
+  const out = { moles:n, mass };
+  if(vol != null){ out.vol = vol; out.M = n/(vol/1000); out.pmv = mass/vol*100; out.ppm = mass*1e6/vol; }
+  if(solv != null){
+    out.solvMass = solv; out.m = n/(solv/1000); out.pmm = mass/(mass+solv)*100;
+    if(o.solvMM) out.x = n/(n + solv/o.solvMM);
+  }
+  if(out.M != null && o.eq != null) out.N = out.M*o.eq;
+  return out;
+}
+function kspToSolubility(ksp,m,n){ return Math.pow(ksp/(Math.pow(m,m)*Math.pow(n,n)), 1/(m+n)); }
+function solubilityToKsp(s,m,n){ return Math.pow(m,m)*Math.pow(n,n)*Math.pow(s,m+n); }
+function dilutionSolve(c1,v1,c2,v2){
+  if(c1==null) c1=c2*v2/v1; else if(v1==null) v1=c2*v2/c1; else if(c2==null) c2=c1*v1/v2; else v2=c1*v1/c2;
+  return { c1, v1, c2, v2 };
+}
+function equilParse(eq){
+  const sep = ['<->','<=>','\u21CC','->','\u2192','='].find(s => eq.includes(s));
+  if(!sep) throw new Error('Usa "<->" (o "=") para separar reactivos y productos.');
+  const parts = eq.split(sep);
+  if(parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) throw new Error('Reacción incompleta.');
+  const side = (txt, sign) => txt.split('+').map(s => s.trim()).filter(Boolean).map(t => {
+    const m = t.match(/^(\d+)?\s*(.+)$/);
+    const name = m[2].trim();
+    return { name, coeff: m[1] ? parseInt(m[1]) : 1, sign, pure: /\((s|l)\)\s*$/i.test(name) };
+  });
+  return [...side(parts[0], -1), ...side(parts[1], 1)];
+}
+function equilCompute(sp, K){
+  const inc = sp.filter(s => !s.pure);
+  const e = s => s.sign*s.coeff;
+  const unknown = inc.filter(s => s.conc == null);
+  if(unknown.length === 0){
+    let Q = 1; inc.forEach(s => { Q *= Math.pow(s.conc, e(s)); });
+    return { type: K==null ? 'K' : 'Q', value: Q };
+  }
+  if(unknown.length === 1){
+    if(K == null) throw new Error('Para despejar una concentración debes dar el valor de Kc.');
+    const u = unknown[0]; let Qk = 1;
+    inc.forEach(s => { if(s !== u) Qk *= Math.pow(s.conc, e(s)); });
+    return { type:'conc', species:u, value: Math.pow(K/Qk, 1/e(u)) };
+  }
+  throw new Error('Deja vacía como máximo una concentración (la que quieres calcular).');
+}
+
+
+  /* ===================== QUÍMICA: concentración, solubilidad, dilución, equilibrio ===================== */
+  function numOrNull(id){
+    const v = document.getElementById(id).value;
+    if(v === '' || v == null) return null;
+    const x = parseFloat(v);
+    return isNaN(x) ? null : x;
+  }
+  function sig(x){
+    if(!isFinite(x)) return String(x);
+    if(x !== 0 && (Math.abs(x) < 1e-3 || Math.abs(x) >= 1e7)) return x.toExponential(5).replace(/\.?0+e/, 'e').replace('e+', 'e');
+    return Number(x.toPrecision(6)).toString();
+  }
+  function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function resRows(rows){
+    return '<table class="chem-table">' + rows.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '</table>';
+  }
+  function chemErr(out, e){ out.innerHTML = '<span class="chem-error">' + escHtml(e.message) + '</span>'; }
+
+  document.getElementById('btnConc').addEventListener('click', () => {
+    const out = document.getElementById('concResult');
+    try {
+      const MM = molarMassOf(document.getElementById('concFormula').value.trim());
+      let solvMM = null;
+      const sf = document.getElementById('concSolvFormula').value.trim();
+      if(sf){ try { solvMM = molarMassOf(sf); } catch(e){ throw new Error('La fórmula del solvente no es válida.'); } }
+      const r = concCompute({
+        mass: numOrNull('concMass'), moles: numOrNull('concMoles'), MM,
+        vol: numOrNull('concVol'), solvMass: numOrNull('concSolv'),
+        density: numOrNull('concDens'), eq: numOrNull('concEq'), solvMM
+      });
+      const rows = [
+        ['Masa molar del soluto', sig(MM) + ' g/mol'],
+        ['Moles de soluto', sig(r.moles) + ' mol'],
+        ['Masa de soluto', sig(r.mass) + ' g']
+      ];
+      if(r.vol != null) rows.push(['Volumen de solución', sig(r.vol) + ' mL']);
+      if(r.solvMass != null) rows.push(['Masa de solvente', sig(r.solvMass) + ' g']);
+      if(r.M != null) rows.push(['Molaridad (M)', sig(r.M) + ' mol/L']);
+      if(r.m != null) rows.push(['Molalidad (m)', sig(r.m) + ' mol/kg']);
+      if(r.pmm != null) rows.push(['% m/m', sig(r.pmm) + ' %']);
+      if(r.pmv != null) rows.push(['% m/v', sig(r.pmv) + ' %']);
+      if(r.ppm != null) rows.push(['ppm (mg/L)', sig(r.ppm)]);
+      if(r.N != null) rows.push(['Normalidad (N)', sig(r.N) + ' eq/L']);
+      if(r.x != null) rows.push(['Fracción molar del soluto', sig(r.x)]);
+      let html = resRows(rows);
+      if(r.M == null && r.m == null) html += '<div class="stat-note" style="padding:0; margin-top:8px;">Agrega el volumen de solución o la masa de solvente para obtener las concentraciones.</div>';
+      out.innerHTML = html;
+    } catch(e){ chemErr(out, e); }
+  });
+
+  const solubMode = document.getElementById('solubMode');
+  solubMode.addEventListener('change', () => {
+    const m = solubMode.value;
+    document.getElementById('solubSaltFields').style.display = (m === 'max') ? 'none' : '';
+    document.getElementById('solubKpsFields').style.display = (m === 'kps') ? '' : 'none';
+    document.getElementById('solubS2kFields').style.display = (m === 's2k') ? '' : 'none';
+    document.getElementById('solubMaxFields').style.display = (m === 'max') ? '' : 'none';
+    document.getElementById('solubResult').innerHTML = '';
+  });
+  document.getElementById('btnSolub').addEventListener('click', () => {
+    const out = document.getElementById('solubResult');
+    try {
+      const mode = solubMode.value;
+      const fstr = document.getElementById('solubFormula').value.trim();
+      const MM = fstr ? molarMassOf(fstr) : null;
+      if(mode === 'max'){
+        const S = numOrNull('solubS100'), solvent = numOrNull('solubSolvent'), present = numOrNull('solubPresent');
+        if(S == null || solvent == null) throw new Error('Ingresa la solubilidad (g/100 g) y la masa de solvente.');
+        const maxMass = S*solvent/100;
+        const rows = [['Masa máxima disoluble', sig(maxMass) + ' g']];
+        if(present != null){
+          if(present <= maxMass) rows.push(['Estado', 'Solución no saturada (caben ' + sig(maxMass - present) + ' g más)']);
+          else rows.push(['Estado', 'Saturada; precipitan ' + sig(present - maxMass) + ' g']);
+        }
+        out.innerHTML = resRows(rows);
+        return;
+      }
+      const m = numOrNull('solubM'), n = numOrNull('solubN');
+      if(m == null || n == null || m <= 0 || n <= 0) throw new Error('Indica m y n (enteros positivos).');
+      if(mode === 'kps'){
+        const ksp = numOrNull('solubKsp');
+        if(ksp == null || ksp <= 0) throw new Error('Ingresa un Ksp mayor que 0.');
+        const s = kspToSolubility(ksp, m, n);
+        const rows = [['Solubilidad molar (s)', sig(s) + ' mol/L'], ['[catión]', sig(m*s) + ' mol/L'], ['[anión]', sig(n*s) + ' mol/L']];
+        if(MM) rows.splice(1, 0, ['Solubilidad en masa', sig(s*MM) + ' g/L']);
+        out.innerHTML = resRows(rows);
+      } else {
+        let s = numOrNull('solubSMol');
+        if(s == null){
+          const sg = numOrNull('solubSG');
+          if(sg == null) throw new Error('Ingresa la solubilidad en mol/L, o en g/L con la fórmula.');
+          if(!MM) throw new Error('Para usar g/L escribe la fórmula de la sal.');
+          s = sg/MM;
+        }
+        if(s <= 0) throw new Error('La solubilidad debe ser mayor que 0.');
+        out.innerHTML = resRows([['Solubilidad molar (s)', sig(s) + ' mol/L'], ['Ksp', sig(solubilityToKsp(s, m, n))]]);
+      }
+    } catch(e){ chemErr(out, e); }
+  });
+
+  document.getElementById('btnDilu').addEventListener('click', () => {
+    const out = document.getElementById('diluResult');
+    try {
+      const v = [numOrNull('diluC1'), numOrNull('diluV1'), numOrNull('diluC2'), numOrNull('diluV2')];
+      if(v.filter(x => x != null).length !== 3) throw new Error('Llena exactamente 3 de los 4 valores.');
+      const known = v.filter(x => x != null);
+      if(known.some(x => x <= 0)) throw new Error('Los valores deben ser mayores que 0.');
+      const r = dilutionSolve(v[0], v[1], v[2], v[3]);
+      const rows = [['C₁', sig(r.c1)], ['V₁', sig(r.v1)], ['C₂', sig(r.c2)], ['V₂', sig(r.v2)],
+        ['Factor de dilución (C₁/C₂)', sig(r.c1/r.c2)]];
+      if(r.v2 >= r.v1) rows.push(['Solvente a agregar (V₂ − V₁)', sig(r.v2 - r.v1)]);
+      else rows.push(['Aviso', 'V₂ < V₁: sería una concentración, no una dilución']);
+      out.innerHTML = resRows(rows);
+    } catch(e){ chemErr(out, e); }
+  });
+
+  let equilSpecies = [];
+  document.getElementById('btnEquilParse').addEventListener('click', () => {
+    const out = document.getElementById('equilResult');
+    const section = document.getElementById('equilSection');
+    try {
+      equilSpecies = equilParse(document.getElementById('equilEq').value.trim());
+      document.getElementById('equilRows').innerHTML = equilSpecies.map((s, i) =>
+        '<div style="margin-bottom:10px;"><span class="field-label">[' + escHtml(s.name) + '] — ' + (s.sign > 0 ? 'producto' : 'reactivo') + ', coef. ' + s.coeff + '</span>' +
+        '<input class="field" id="equilConc_' + i + '" type="number" step="any" placeholder="mol/L (vacío = incógnita)">' +
+        '<label class="check-row"><input type="checkbox" id="equilPure_' + i + '"' + (s.pure ? ' checked' : '') + '> sólido/líquido puro (no entra en K)</label></div>'
+      ).join('');
+      const dn = equilSpecies.filter(s => !s.pure).reduce((a, s) => a + s.sign*s.coeff, 0);
+      document.getElementById('kpDn').value = dn;
+      out.innerHTML = '';
+      section.style.display = '';
+    } catch(e){
+      equilSpecies = [];
+      chemErr(document.getElementById('equilResult'), e);
+      section.style.display = '';
+      document.getElementById('equilRows').innerHTML = '';
+    }
+  });
+  document.getElementById('btnEquilCalc').addEventListener('click', () => {
+    const out = document.getElementById('equilResult');
+    try {
+      if(!equilSpecies.length) throw new Error('Primero pulsa "Leer reacción".');
+      const sp = equilSpecies.map((s, i) => ({
+        ...s, conc: numOrNull('equilConc_' + i), pure: !!document.getElementById('equilPure_' + i).checked
+      }));
+      const inc = sp.filter(s => !s.pure);
+      if(inc.some(s => s.conc != null && s.conc <= 0)) throw new Error('Las concentraciones deben ser mayores que 0.');
+      const K = numOrNull('equilK');
+      if(K != null && K <= 0) throw new Error('Kc debe ser mayor que 0.');
+      const term = s => '[' + escHtml(s.name) + ']' + (s.coeff > 1 ? '<sup>' + s.coeff + '</sup>' : '');
+      const num = inc.filter(s => s.sign > 0).map(term).join('·') || '1';
+      const den = inc.filter(s => s.sign < 0).map(term).join('·') || '1';
+      const expr = '<div style="margin-bottom:8px;">Kc = ' + num + ' / ' + den + '</div>';
+      const r = equilCompute(sp, K);
+      if(r.type === 'K') out.innerHTML = expr + resRows([['Kc', sig(r.value)]]);
+      else if(r.type === 'Q'){
+        const rel = Math.abs(r.value - K) <= 1e-9*Math.max(1, K) ? 'Q = K: el sistema está en equilibrio'
+          : (r.value < K ? 'Q < K: la reacción avanza hacia los productos' : 'Q > K: la reacción avanza hacia los reactivos');
+        out.innerHTML = expr + resRows([['Q', sig(r.value)], ['Kc', sig(K)], ['Sentido', rel]]);
+      } else out.innerHTML = expr + resRows([['[' + escHtml(r.species.name) + ']', sig(r.value) + ' mol/L']]);
+    } catch(e){ chemErr(out, e); }
+  });
+  document.getElementById('btnKp').addEventListener('click', () => {
+    const out = document.getElementById('kpResult');
+    try {
+      const Kc = numOrNull('kpKc'), Kp = numOrNull('kpKp'), T = numOrNull('kpT'), dn = numOrNull('kpDn');
+      if((Kc == null) === (Kp == null)) throw new Error('Llena solo uno: Kc o Kp.');
+      if(T == null || T <= 0) throw new Error('Ingresa la temperatura en kelvin (mayor que 0).');
+      const f = Math.pow(0.082057366*T, dn == null ? 0 : dn);
+      if(Kc != null) out.innerHTML = resRows([['Kp', sig(Kc*f)], ['(R·T)^Δn', sig(f)]]);
+      else out.innerHTML = resRows([['Kc', sig(Kp/f)], ['(R·T)^Δn', sig(f)]]);
+    } catch(e){ chemErr(out, e); }
+  });
+
+  /* ===================== TOPOGRAFÍA ===================== */
+  document.querySelectorAll('[data-toposubtab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-toposubtab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#panel-topo .subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('toposubpanel-' + btn.dataset.toposubtab).classList.add('active');
+    });
+  });
+
+  function fx(x, d){ const lim = 0.5*Math.pow(10, -d); return (Math.abs(x) < lim ? 0 : x).toFixed(d); }
+  function topoTable(headers, rows, extraClass){
+    return '<div class="scroll-x"><table class="topo-table"><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr>' +
+      rows.map(r => '<tr>' + r.map(c => '<td' + (c && c.cls ? ' class="' + c.cls + '"' : '') + '>' + (c && c.v !== undefined ? c.v : c) + '</td>').join('') + '</tr>').join('') +
+      '</table></div>';
+  }
+  function topoErr(out, e){ out.innerHTML = '<span class="chem-error">' + escHtml(e.message) + '</span>'; }
+
+  document.getElementById('btnTopoArea').addEventListener('click', () => {
+    const out = document.getElementById('topoAreaResult');
+    try {
+      const order = document.getElementById('topoAreaOrder').value;
+      const rows = topoParsePoints(document.getElementById('topoAreaInput').value, 2);
+      if(rows.length < 3) throw new Error('Ingresa al menos 3 puntos, uno por línea.');
+      let pts = rows.map(r => order === 'EN' ? [r[0], r[1]] : [r[1], r[0]]); // [Este, Norte]
+      const f = pts[0], l = pts[pts.length-1];
+      if(pts.length > 3 && f[0] === l[0] && f[1] === l[1]) pts.pop();
+      const st = topoPolygonStats(pts);
+      if(st.area === 0) throw new Error('Los puntos son colineales: el área es 0.');
+      const sum = [
+        ['Área', fx(st.area, 3) + ' m²'],
+        ['Área', fx(st.area/10000, 4) + ' ha'],
+        ['Perímetro', fx(st.perimeter, 3) + ' m'],
+        ['Centroide (E, N)', fx(st.centroid[0], 3) + ', ' + fx(st.centroid[1], 3)],
+        ['Vértices', pts.length],
+        ['Sentido del recorrido', st.signed > 0 ? 'Antihorario' : 'Horario']
+      ];
+      const sides = pts.map((p, i) => {
+        const q = pts[(i+1) % pts.length];
+        const dE = q[0]-p[0], dN = q[1]-p[1];
+        let az = Math.atan2(dE, dN)*180/Math.PI; if(az < 0) az += 360;
+        return [{v:(i+1) + '–' + (((i+1) % pts.length) + 1), cls:'lbl'}, fx(Math.hypot(dE, dN), 3), toDMS(az)];
+      });
+      out.innerHTML = resRows(sum) + '<div class="res-title">Lados (distancia y azimut desde el Norte)</div>' +
+        topoTable(['Lado', 'Distancia (m)', 'Azimut'], sides);
+    } catch(e){ topoErr(out, e); }
+  });
+
+  document.getElementById('btnTopoVolume').addEventListener('click', () => {
+    const out = document.getElementById('topoVolumeResult');
+    try {
+      const x0 = numOrNull('topoX0') || 0, y0 = numOrNull('topoY0') || 0;
+      const dx = numOrNull('topoDx'), dy = numOrNull('topoDy'), zd = numOrNull('topoZd');
+      if(dx == null || dy == null || dx === 0 || dy === 0) throw new Error('Ingresa dx y dy distintos de 0.');
+      if(zd == null) throw new Error('Ingresa la cota de diseño.');
+      const z = topoParsePoints(document.getElementById('topoGridInput').value, 1);
+      if(z.length < 2) throw new Error('Necesitas al menos 2 filas de cotas.');
+      const cols = z[0].length;
+      if(cols < 2) throw new Error('Necesitas al menos 2 columnas de cotas.');
+      if(z.some(r => r.length !== cols)) throw new Error('Todas las filas deben tener la misma cantidad de cotas (' + cols + ').');
+      const g = topoGridVolume(z, dx, dy, zd);
+      const sum = [
+        ['Celdas', g.cells + ' (' + (z.length-1) + ' × ' + (cols-1) + ')'],
+        ['Área total', fx(g.area, 3) + ' m²'],
+        ['Volumen de CORTE', fx(g.cut, 3) + ' m³'],
+        ['Volumen de RELLENO', fx(g.fill, 3) + ' m³'],
+        ['Balance (corte − relleno)', fx(g.balance, 3) + ' m³' + (g.balance > 0 ? ' (sobra material)' : (g.balance < 0 ? ' (falta material)' : ''))],
+        ['Área en corte', fx(g.aCut, 3) + ' m²'],
+        ['Área en relleno', fx(g.aFill, 3) + ' m²'],
+        ['Cota de diseño que compensa', fx(g.zBalance, 3) + ' m']
+      ];
+      const heads = ['Norte \\ Este'];
+      for(let i=0;i<cols;i++) heads.push(fx(x0 + i*dx, 2));
+      const depthRows = z.map((row, j) => [{v:fx(y0 + j*dy, 2), cls:'lbl'}].concat(
+        row.map(v => { const h = v - zd; return { v:(h > 0 ? '+' : '') + fx(h, 3), cls: h < 0 ? 'fill-c' : '' }; })));
+      const zp = topoGridZeroPoints(z, x0, y0, dx, dy, zd);
+      const zpRows = zp.map((p, k) => [k+1, fx(p.x, 3), fx(p.y, 3), {v:p.where, cls:'lbl'}]);
+      out.innerHTML = resRows(sum) +
+        '<div class="res-title">Cotas de trabajo (+ corte / − relleno), en m</div>' + topoTable(heads, depthRows) +
+        '<div class="res-title">Puntos de paso (línea de ceros): ' + zp.length + '</div>' +
+        (zp.length ? topoTable(['#', 'Este', 'Norte', 'Ubicación'], zpRows) : '<div class="stat-note" style="padding:0;">El terreno no cruza la cota de diseño en la cuadrícula.</div>');
+    } catch(e){ topoErr(out, e); }
+  });
+
+  document.getElementById('btnTopoCotas').addEventListener('click', () => {
+    const out = document.getElementById('topoCotasResult');
+    try {
+      const order = document.getElementById('topoCotasOrder').value;
+      const zd = numOrNull('topoCotasZd');
+      if(zd == null) throw new Error('Ingresa la cota de diseño.');
+      const rows = topoParsePoints(document.getElementById('topoCotasInput').value, 3);
+      if(rows.length < 2) throw new Error('Ingresa al menos 2 puntos con 3 valores (coordenadas y cota).');
+      const closed = !!document.getElementById('topoCotasClosed').checked;
+      if(closed && rows.length < 3) throw new Error('Un polígono necesita al menos 3 puntos.');
+      const pts = rows.map(r => order === 'EN' ? [r[0], r[1], r[2]] : [r[1], r[0], r[2]]); // [E, N, Z]
+      const ptRows = pts.map((p, i) => {
+        const h = p[2] - zd;
+        const tipo = Math.abs(h) < 1e-9 ? 'EN COTA' : (h > 0 ? 'CORTE' : 'RELLENO');
+        return [i+1, fx(p[0], 3), fx(p[1], 3), fx(p[2], 3), { v:(h > 0 ? '+' : '') + fx(h, 3), cls: h < 0 ? 'fill-c' : '' }, { v:tipo, cls: h < 0 ? 'fill-c' : '' }];
+      });
+      let html = '<div class="res-title" style="margin-top:0;">Cotas de trabajo (cota terreno − cota diseño = ' + fx(zd, 3) + ')</div>' +
+        topoTable(['#', 'Este', 'Norte', 'Cota terreno', 'Cota trabajo', 'Tipo'], ptRows);
+      const zp = topoZeroPointsPath(pts, zd, closed);
+      html += '<div class="res-title">Puntos de corte con la cota de diseño: ' + zp.length + '</div>';
+      html += zp.length
+        ? topoTable(['Entre', 'Este', 'Norte', 'Cota', 'Dist. desde el 1.er punto del tramo'], zp.map(p => [{v:p.from + '–' + p.to, cls:'lbl'}, fx(p.e, 3), fx(p.n, 3), fx(zd, 3), fx(p.dist, 3)]))
+        : '<div class="stat-note" style="padding:0;">Todos los puntos quedan del mismo lado de la cota de diseño.</div>';
+      if(closed){
+        try {
+          const v = topoPolyVolume(pts, zd);
+          html += '<div class="res-title">Volumen aproximado (prismas triangulares)</div>' + resRows([
+            ['Triángulos', v.tris],
+            ['Área del polígono', fx(v.area, 3) + ' m²'],
+            ['Volumen de CORTE', fx(v.cut, 3) + ' m³'],
+            ['Volumen de RELLENO', fx(v.fill, 3) + ' m³'],
+            ['Balance (corte − relleno)', fx(v.balance, 3) + ' m³'],
+            ['Área en corte', fx(v.aCut, 3) + ' m²'],
+            ['Área en relleno', fx(v.aFill, 3) + ' m²']
+          ]) + '<div class="stat-note" style="padding:0; margin-top:6px;">Aproxima el terreno con triángulos entre los vértices dados; entre más puntos, mejor la aproximación. Para mayor precisión usa la pestaña de cuadrícula.</div>';
+        } catch(e){ html += '<span class="chem-error">' + escHtml(e.message) + '</span>'; }
+      }
+      out.innerHTML = html;
+    } catch(e){ topoErr(out, e); }
   });
 
   // initial paint once layout is ready
