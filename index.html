@@ -947,8 +947,8 @@
     </div>
 
     <div class="subpanel active" id="toposubpanel-poly">
-      <p class="stats-intro"><b>Paso 1 · Puntos.</b> Recorre el polígono vértice por vértice, <b>en orden</b>, y escribe de cada punto su <b>Norte</b>, su <b>Este</b> y la <b>cota del terreno natural</b>. <b>No repitas el primer punto</b>: el polígono se cierra solo.</p>
-      <div class="pts-head"><span></span><span>Norte (m)</span><span>Este (m)</span><span>Cota (m)</span><span></span></div>
+      <p class="stats-intro"><b>Paso 1 · Puntos.</b> Recorre el polígono vértice por vértice, <b>en orden</b>, y escribe de cada punto su <b>Este</b>, su <b>Norte</b> y la <b>cota del terreno natural</b>. <b>No repitas el primer punto</b>: el polígono se cierra solo.</p>
+      <div class="pts-head"><span></span><span>Este (m)</span><span>Norte (m)</span><span>Cota (m)</span><span></span></div>
       <div id="topoPtsRows"></div>
       <div class="pts-actions">
         <button class="add-btn" id="btnTopoAddPt">+ Punto</button>
@@ -959,12 +959,12 @@
       <div id="topoPasteBox" style="display:none;">
         <span class="field-label">Formato de cada línea del texto</span>
         <select class="field" id="topoPasteFmt">
-          <option value="NEZ">Norte, Este, Cota</option>
           <option value="ENZ">Este, Norte, Cota</option>
-          <option value="PNEZ">Punto, Norte, Este, Cota</option>
+          <option value="NEZ">Norte, Este, Cota</option>
           <option value="PENZ">Punto, Este, Norte, Cota</option>
+          <option value="PNEZ">Punto, Norte, Este, Cota</option>
         </select>
-        <textarea class="field-area" id="topoPasteText" style="margin-top:8px;" placeholder="870000.00 1060000.00 1002.40&#10;870000.00 1060040.00 1001.10&#10;870030.00 1060050.00 999.80"></textarea>
+        <textarea class="field-area" id="topoPasteText" style="margin-top:8px;" placeholder="1060000.00 870000.00 1002.40&#10;1060040.00 870000.00 1001.10&#10;1060050.00 870030.00 999.80"></textarea>
         <button class="action-btn" id="btnTopoPasteApply">Cargar en la tabla</button>
         <div id="topoPasteMsg"></div>
       </div>
@@ -979,12 +979,12 @@
     </div>
 
     <div class="subpanel" id="toposubpanel-grid">
-      <p class="stats-intro"><b>Paso 1 · Cuadrícula.</b> Indica dónde empieza (Norte y Este del primer punto) y la separación entre puntos: <b>dy</b> entre filas (hacia el Norte; usa negativo si bajas) y <b>dx</b> entre columnas (hacia el Este).</p>
+      <p class="stats-intro"><b>Paso 1 · Cuadrícula.</b> Indica dónde empieza (Este y Norte del primer punto) y la separación entre puntos: <b>dx</b> entre columnas (hacia el Este) y <b>dy</b> entre filas (hacia el Norte; usa negativo si bajas).</p>
       <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
-        <div><span class="field-label">Norte inicial (m)</span><input class="field" id="topoY0" type="number" step="any" value="0"></div>
         <div><span class="field-label">Este inicial (m)</span><input class="field" id="topoX0" type="number" step="any" value="0"></div>
-        <div><span class="field-label">dy: entre filas (m)</span><input class="field" id="topoDy" type="number" step="any" value="10"></div>
+        <div><span class="field-label">Norte inicial (m)</span><input class="field" id="topoY0" type="number" step="any" value="0"></div>
         <div><span class="field-label">dx: entre columnas (m)</span><input class="field" id="topoDx" type="number" step="any" value="10"></div>
+        <div><span class="field-label">dy: entre filas (m)</span><input class="field" id="topoDy" type="number" step="any" value="10"></div>
       </div>
       <p class="stats-intro" style="margin-top:12px;"><b>Paso 2 · Cotas del terreno.</b> Una línea por fila de la cuadrícula, con la cota de cada punto separada por espacios. Ejemplo: 3 líneas de 3 cotas = 4 celdas (2 × 2).</p>
       <textarea class="field-area" id="topoGridInput" placeholder="101.2 100.8 100.1&#10;100.9 100.4 99.7&#10;100.5 100.0 99.2"></textarea>
@@ -3650,7 +3650,7 @@ function equilCompute(sp, K){
   const topoInfo = t => '<div class="stat-note" style="padding:0; margin-top:6px; color:var(--accent);">' + escHtml(t) + '</div>';
   const topoWarn = t => '<div class="stat-note" style="padding:0; margin-top:6px; color:#ffd54f;">⚠ ' + escHtml(t) + '</div>';
 
-  // ---- Tabla de puntos (Norte, Este, Cota) ----
+  // ---- Tabla de puntos (Este, Norte, Cota) ----
   let topoRows = [];
   const topoBlank = () => ({ n:'', e:'', z:'' });
   function topoResetRows(k){ topoRows = []; for(let i=0;i<k;i++) topoRows.push(topoBlank()); }
@@ -3658,7 +3658,7 @@ function equilCompute(sp, K){
     document.getElementById('topoPtsRows').innerHTML = topoRows.map((r, i) => {
       const L = 'P' + (i+1);
       const inp = (c, ph, v) => '<input type="number" step="any" inputmode="decimal" data-i="' + i + '" data-c="' + c + '" value="' + escHtml(v) + '" placeholder="' + ph + '" aria-label="' + ph + ' de ' + L + '">';
-      return '<div class="pt-row"><span class="pt-lbl">' + L + '</span>' + inp('n','Norte',r.n) + inp('e','Este',r.e) + inp('z','Cota',r.z) +
+      return '<div class="pt-row"><span class="pt-lbl">' + L + '</span>' + inp('e','Este',r.e) + inp('n','Norte',r.n) + inp('z','Cota',r.z) +
         '<button type="button" class="pt-del" data-del="' + i + '" aria-label="Quitar ' + L + '">×</button></div>';
     }).join('');
   }
@@ -3684,7 +3684,7 @@ function equilCompute(sp, K){
   }
   document.getElementById('btnTopoAddPt').addEventListener('click', () => {
     topoRows.push(topoBlank()); topoRenderRows();
-    const inp = topoRowsBox.querySelector && topoRowsBox.querySelector('[data-i="' + (topoRows.length-1) + '"][data-c="n"]');
+    const inp = topoRowsBox.querySelector && topoRowsBox.querySelector('[data-i="' + (topoRows.length-1) + '"][data-c="e"]');
     if(inp && inp.focus) inp.focus();
   });
   document.getElementById('btnTopoClear').addEventListener('click', () => {
@@ -3726,8 +3726,8 @@ function equilCompute(sp, K){
       if(r.n === '' && r.e === '' && r.z === '') return;
       const L = 'P' + (i+1);
       const n = r.n === '' ? NaN : Number(r.n), e = r.e === '' ? NaN : Number(r.e);
-      if(!isFinite(n)) errs.push(L + ': falta el Norte.');
       if(!isFinite(e)) errs.push(L + ': falta el Este.');
+      if(!isFinite(n)) errs.push(L + ': falta el Norte.');
       let z = null;
       if(r.z !== ''){ z = Number(r.z); if(!isFinite(z)){ errs.push(L + ': la cota no es un número.'); z = null; } }
       if(isFinite(n) && isFinite(e)) pts.push({ n, e, z, label: L });
@@ -3742,7 +3742,7 @@ function equilCompute(sp, K){
     try {
       const rd = topoReadRows();
       if(rd.errs.length) throw new Error(rd.errs.join('\n'));
-      if(rd.pts.length < 3) throw new Error('Escribe al menos 3 puntos (Norte, Este y Cota de cada vértice).');
+      if(rd.pts.length < 3) throw new Error('Escribe al menos 3 puntos (Este, Norte y Cota de cada vértice).');
       const dd = topoDedupe(rd.pts), P = dd.pts;
       if(P.length < 3) throw new Error('Después de quitar puntos repetidos quedan menos de 3 puntos.');
       const notes = dd.notes.map(topoInfo), warns = [];
@@ -3768,7 +3768,7 @@ function equilCompute(sp, K){
         ['Área', fx(st.area, 3) + ' m²'],
         ['Área', fx(st.area/10000, 4) + ' ha'],
         ['Perímetro', fx(st.perimeter, 3) + ' m'],
-        ['Centroide (Norte, Este)', fx(st.centroid[1], 3) + ', ' + fx(st.centroid[0], 3)],
+        ['Centroide (Este, Norte)', fx(st.centroid[0], 3) + ', ' + fx(st.centroid[1], 3)],
         ['Sentido del recorrido', st.signed > 0 ? 'Antihorario' : 'Horario']
       ];
       let html = '<div class="res-title" style="margin-top:0;">Polígono</div>' + resRows(rows1);
@@ -3795,15 +3795,15 @@ function equilCompute(sp, K){
       if(an){
         const wk = P.map((p, i) => {
           const h = an.h[i], cls = h > 1e-9 ? 'cut-c' : (h < -1e-9 ? 'fill-c' : '');
-          return [{ v:p.name, cls:'lbl' }, fx(p.n, 3), fx(p.e, 3), fx(p.z, 3), { v:(h > 0 ? '+' : '') + fx(h, 3), cls }, { v: Math.abs(h) < 1e-9 ? 'EN COTA' : (h > 0 ? 'CORTE' : 'RELLENO'), cls }];
+          return [{ v:p.name, cls:'lbl' }, fx(p.e, 3), fx(p.n, 3), fx(p.z, 3), { v:(h > 0 ? '+' : '') + fx(h, 3), cls }, { v: Math.abs(h) < 1e-9 ? 'EN COTA' : (h > 0 ? 'CORTE' : 'RELLENO'), cls }];
         });
         det += '<div class="res-title">1 · Cota de trabajo en cada punto</div>' +
           '<div class="stat-note" style="padding:0;">Cota de trabajo = cota del terreno − cota de diseño. Positiva = hay que cortar; negativa = hay que rellenar.</div>' +
-          topoTable(['Punto', 'Norte', 'Este', 'Cota terreno', 'Cota trabajo', 'Tipo'], wk);
+          topoTable(['Punto', 'Este', 'Norte', 'Cota terreno', 'Cota trabajo', 'Tipo'], wk);
         det += '<div class="res-title">2 · Puntos de cruce de la cota de diseño con el terreno natural</div>' +
           (an.crossings.length
             ? '<div class="stat-note" style="padding:0;">Son los puntos X1, X2… de la gráfica: ahí el terreno está exactamente a la cota de diseño (corte = 0).</div>' +
-              topoTable(['Punto', 'Norte', 'Este', 'Cota', 'Ubicación'], an.crossings.map(c => [{ v:c.id, cls:'lbl' }, fx(c.n, 3), fx(c.e, 3), fx(zd, 3), { v:c.where, cls:'lbl' }]))
+              topoTable(['Punto', 'Este', 'Norte', 'Cota', 'Ubicación'], an.crossings.map(c => [{ v:c.id, cls:'lbl' }, fx(c.e, 3), fx(c.n, 3), fx(zd, 3), { v:c.where, cls:'lbl' }]))
             : '<div class="stat-note" style="padding:0;">El terreno no cruza la cota de diseño: todo el polígono es ' + (an.totals.cut > 0 ? 'corte' : 'relleno') + '.</div>');
         det += '<div class="res-title">3 · Zonas de corte y de relleno</div>' +
           '<div class="stat-note" style="padding:0;">Cada zona es una región continua del polígono; su área y volumen se calculan por separado.</div>' +
@@ -3854,7 +3854,7 @@ function equilCompute(sp, K){
         ['Balance (corte − relleno)', fx(g.balance, 3) + ' m³' + (g.balance > 0.0005 ? ' (sobra material)' : (g.balance < -0.0005 ? ' (falta material)' : ''))],
         ['Cota de diseño que compensa', fx(g.zBalance, 3) + ' m']
       ];
-      const heads = ['Norte \\ Este'];
+      const heads = ['Norte ↓ · Este →'];
       for(let i=0;i<cols;i++) heads.push(fx(x0 + i*dx, 2));
       const depthRows = z.map((row, j) => [{ v:fx(y0 + j*dy, 2), cls:'lbl' }].concat(
         row.map(v => { const h = v - zd; return { v:(h > 0 ? '+' : '') + fx(h, 3), cls: h < -1e-9 ? 'fill-c' : (h > 1e-9 ? 'cut-c' : '') }; })));
@@ -3862,7 +3862,7 @@ function equilCompute(sp, K){
       out.innerHTML = '<div class="res-title" style="margin-top:0;">Resultado</div>' + resRows(sum) +
         '<div class="res-title">Cota de trabajo en cada punto (m)</div><div class="stat-note" style="padding:0;">Terreno − diseño. Positiva = corte, negativa = relleno.</div>' + topoTable(heads, depthRows) +
         '<div class="res-title">Puntos de cruce con la cota de diseño: ' + zp.length + '</div>' +
-        (zp.length ? topoTable(['#', 'Norte', 'Este', 'Ubicación'], zp.map((p, k) => [k+1, fx(p.y, 3), fx(p.x, 3), { v:p.where, cls:'lbl' }]))
+        (zp.length ? topoTable(['#', 'Este', 'Norte', 'Ubicación'], zp.map((p, k) => [k+1, fx(p.x, 3), fx(p.y, 3), { v:p.where, cls:'lbl' }]))
                    : '<div class="stat-note" style="padding:0;">El terreno no cruza la cota de diseño en esta cuadrícula.</div>');
     } catch(e){ topoErr(out, e); }
   });
