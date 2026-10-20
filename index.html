@@ -275,7 +275,29 @@
   .topo-table{ border-collapse:collapse; font-size:12px; width:100%; }
   .topo-table th{ color:var(--text-dim); font-weight:600; padding:3px 8px; text-align:right; white-space:nowrap; font-family:var(--sans); }
   .topo-table td{ color:var(--accent); padding:3px 8px; text-align:right; white-space:nowrap; }
-  .topo-table td.fill-c, .fill-c{ color:#ffb86b; }
+  .topo-table td.cut-c, .cut-c{ color:#ff8a65; }
+  .topo-table td.fill-c, .fill-c{ color:#64b5f6; }
+  .pts-head, .pt-row{ display:grid; grid-template-columns:26px 1fr 1fr 0.78fr 24px; gap:4px; align-items:center; }
+  .pts-head{ font-size:11px; color:var(--text-dim); margin:10px 0 4px; font-family:var(--sans); }
+  .pts-head span{ text-align:center; }
+  .pt-row{ margin-bottom:5px; }
+  .pt-lbl{ font-family:var(--mono); font-size:11px; color:var(--accent); text-align:center; }
+  .pt-row input{
+    width:100%; min-width:0; background:var(--screen-bg); color:var(--screen-fg); border:1px solid #000;
+    border-radius:6px; padding:8px 4px; font-family:var(--mono); font-size:11.5px; outline:none;
+  }
+  .pt-del{ width:24px; height:30px; border:none; border-radius:6px; background:rgba(255,255,255,0.07); color:var(--text-dim); cursor:pointer; font-size:14px; padding:0; }
+  .pt-del:active{ background:rgba(255,255,255,0.18); }
+  .pts-actions{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 10px; }
+  .pts-actions .add-btn{ flex:1 1 auto; padding:9px 10px; }
+  #topoGraph{ margin-top:12px; }
+  #topoGraph svg{ width:100%; height:auto; display:block; border-radius:10px; }
+  .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12px; color:var(--text-dim); margin:8px 2px 0; }
+  .legend .sw{ display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:5px; }
+  .sw.cut{ background:rgba(255,138,101,.55); border:1px solid #ff8a65; }
+  .sw.fill{ background:rgba(100,181,246,.55); border:1px solid #64b5f6; }
+  .sw.zero{ height:0; width:16px; border-radius:0; border-top:2px dashed #ffd54f; vertical-align:3px; }
+  .sw.dot{ width:9px; height:9px; border-radius:50%; background:#ffd54f; vertical-align:-1px; }
   .topo-table td.lbl{ color:var(--text); text-align:left; }
   .check-row{ display:flex; align-items:flex-start; gap:8px; margin:10px 0 0; font-size:13px; color:var(--text-dim); line-height:1.4; }
   .check-row input{ margin-top:3px; }
@@ -792,6 +814,7 @@
       <button class="subtab" data-physubtab="mrua">MRUA</button>
       <button class="subtab" data-physubtab="vertical">Vertical</button>
       <button class="subtab" data-physubtab="parabolico">Parabólico</button>
+      <button class="subtab" data-physubtab="mcu">Circular (MCU)</button>
     </div>
 
     <!-- MRU -->
@@ -891,60 +914,87 @@
       <button class="action-btn" id="btnParabolico">Calcular</button>
       <div class="chem-result" id="parabolicoResult"></div>
     </div>
+  
+    <div class="subpanel" id="physubpanel-mcu">
+      <p class="stats-intro">Movimiento Circular Uniforme. Llena los datos que conozcas: normalmente basta el <b>radio</b> y un dato de la rotación (T, f, rpm, ω, v o aₙ). Agrega el tiempo para obtener ángulo, vueltas y arco, y la masa para la fuerza.</p>
+      <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+        <div><span class="field-label">Radio r (m)</span><input class="field" id="mcuR" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Período T (s)</span><input class="field" id="mcuT" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Frecuencia f (Hz)</span><input class="field" id="mcuF" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Revoluciones (rpm)</span><input class="field" id="mcuRpm" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Vel. angular ω (rad/s)</span><input class="field" id="mcuW" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Vel. tangencial v (m/s)</span><input class="field" id="mcuV" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Acel. centrípeta aₙ (m/s²)</span><input class="field" id="mcuA" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Tiempo t (s)</span><input class="field" id="mcuTime" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Ángulo θ (rad)</span><input class="field" id="mcuTh" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Ángulo θ (°)</span><input class="field" id="mcuThd" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Vueltas n</span><input class="field" id="mcuN" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Arco s (m)</span><input class="field" id="mcuS" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Masa m (kg)</span><input class="field" id="mcuM" type="number" step="any" inputmode="decimal"></div>
+        <div><span class="field-label">Fuerza centrípeta F (N)</span><input class="field" id="mcuFc" type="number" step="any" inputmode="decimal"></div>
+      </div>
+      <button class="action-btn" id="btnMcu">Calcular</button>
+      <button class="add-btn" id="btnMcuClear" style="width:100%; margin-top:8px; padding:10px;">Limpiar</button>
+      <div class="chem-result" id="mcuResult"></div>
+    </div>
   </section>
 
   <!-- ===================== TOPOGRAFÍA ===================== -->
   <section class="panel" id="panel-topo">
     <div class="subtabs">
-      <button class="subtab active" data-toposubtab="area">Área</button>
-      <button class="subtab" data-toposubtab="volume">Volumen (cuadrícula)</button>
-      <button class="subtab" data-toposubtab="cotas">Cotas de corte</button>
+      <button class="subtab active" data-toposubtab="poly">Polígono</button>
+      <button class="subtab" data-toposubtab="grid">Cuadrícula</button>
     </div>
 
-    <!-- ÁREA POR COORDENADAS -->
-    <div class="subpanel active" id="toposubpanel-area">
-      <p class="stats-intro">Un punto por línea, en orden de recorrido (horario o antihorario). No repitas el primer punto al final. Si una línea trae 3 valores (con cota) se usan los 2 primeros.</p>
-      <span class="field-label">Orden de las columnas</span>
-      <select class="field" id="topoAreaOrder">
-        <option value="EN">Este, Norte (X, Y)</option>
-        <option value="NE">Norte, Este (N, E)</option>
-      </select>
-      <textarea class="field-area" id="topoAreaInput" style="margin-top:8px;" placeholder="1000.00 2000.00&#10;1050.25 2000.00&#10;1050.25 2040.80&#10;1000.00 2040.80"></textarea>
-      <button class="action-btn" id="btnTopoArea">Calcular área</button>
-      <div class="chem-result" id="topoAreaResult"></div>
-    </div>
-
-    <!-- VOLUMEN POR CUADRÍCULA -->
-    <div class="subpanel" id="toposubpanel-volume">
-      <p class="stats-intro">Cotas del terreno en los vértices de una cuadrícula. La fila 1 está en el Norte inicial y cada fila siguiente avanza dy (usa dy negativo si bajas hacia el sur); cada columna avanza dx en Este.</p>
-      <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
-        <div><span class="field-label">Este inicial (X₀)</span><input class="field" id="topoX0" type="number" step="any" value="0"></div>
-        <div><span class="field-label">Norte inicial (Y₀)</span><input class="field" id="topoY0" type="number" step="any" value="0"></div>
-        <div><span class="field-label">dx (m entre columnas)</span><input class="field" id="topoDx" type="number" step="any" value="10"></div>
-        <div><span class="field-label">dy (m entre filas)</span><input class="field" id="topoDy" type="number" step="any" value="10"></div>
+    <div class="subpanel active" id="toposubpanel-poly">
+      <p class="stats-intro"><b>Paso 1 · Puntos.</b> Recorre el polígono vértice por vértice, <b>en orden</b>, y escribe de cada punto su <b>Norte</b>, su <b>Este</b> y la <b>cota del terreno natural</b>. <b>No repitas el primer punto</b>: el polígono se cierra solo.</p>
+      <div class="pts-head"><span></span><span>Norte (m)</span><span>Este (m)</span><span>Cota (m)</span><span></span></div>
+      <div id="topoPtsRows"></div>
+      <div class="pts-actions">
+        <button class="add-btn" id="btnTopoAddPt">+ Punto</button>
+        <button class="add-btn" id="btnTopoPaste">Pegar lista</button>
+        <button class="add-btn" id="btnTopoExample">Ejemplo</button>
+        <button class="add-btn" id="btnTopoClear">Borrar todo</button>
       </div>
-      <span class="field-label" style="margin-top:8px; display:block;">Cota de diseño (m)</span>
-      <input class="field" id="topoZd" type="number" step="any" placeholder="Ej: 100.50">
-      <span class="field-label" style="margin-top:8px; display:block;">Cotas del terreno (una fila por línea)</span>
-      <textarea class="field-area" id="topoGridInput" placeholder="101.2 100.8 100.1&#10;100.9 100.4 99.7&#10;100.5 100.0 99.2"></textarea>
-      <button class="action-btn" id="btnTopoVolume">Calcular volúmenes</button>
-      <div class="chem-result" id="topoVolumeResult"></div>
+      <div id="topoPasteBox" style="display:none;">
+        <span class="field-label">Formato de cada línea del texto</span>
+        <select class="field" id="topoPasteFmt">
+          <option value="NEZ">Norte, Este, Cota</option>
+          <option value="ENZ">Este, Norte, Cota</option>
+          <option value="PNEZ">Punto, Norte, Este, Cota</option>
+          <option value="PENZ">Punto, Este, Norte, Cota</option>
+        </select>
+        <textarea class="field-area" id="topoPasteText" style="margin-top:8px;" placeholder="870000.00 1060000.00 1002.40&#10;870000.00 1060040.00 1001.10&#10;870030.00 1060050.00 999.80"></textarea>
+        <button class="action-btn" id="btnTopoPasteApply">Cargar en la tabla</button>
+        <div id="topoPasteMsg"></div>
+      </div>
+
+      <p class="stats-intro" style="margin-top:14px;"><b>Paso 2 · Cota de diseño.</b> Altura a la que quedará el terreno terminado. Si la dejas vacía solo se calcula el área.</p>
+      <input class="field" id="topoPolyZd" type="number" step="any" inputmode="decimal" placeholder="Cota de diseño (m), ej: 1001.00">
+      <button class="action-btn" id="btnTopoPoly">Calcular y graficar</button>
+      <div id="topoPolyMsg"></div>
+      <div class="chem-result" id="topoPolySummary" style="display:none;"></div>
+      <div id="topoGraph"></div>
+      <div id="topoPolyDetails"></div>
     </div>
 
-    <!-- COTAS DE CORTE -->
-    <div class="subpanel" id="toposubpanel-cotas">
-      <p class="stats-intro">Puntos con su cota, en orden de recorrido. Se calcula la cota de trabajo de cada punto (terreno − diseño) y las coordenadas de los puntos de paso donde el terreno cruza la cota de diseño.</p>
-      <span class="field-label">Orden de las columnas</span>
-      <select class="field" id="topoCotasOrder">
-        <option value="EN">Este, Norte, Cota</option>
-        <option value="NE">Norte, Este, Cota</option>
-      </select>
-      <span class="field-label" style="margin-top:8px; display:block;">Cota de diseño (m)</span>
-      <input class="field" id="topoCotasZd" type="number" step="any" placeholder="Ej: 100.50">
-      <textarea class="field-area" id="topoCotasInput" style="margin-top:8px;" placeholder="1000.00 2000.00 101.20&#10;1020.00 2000.00 100.30&#10;1020.00 2030.00 99.80&#10;1000.00 2030.00 100.90"></textarea>
-      <label class="check-row"><input type="checkbox" id="topoCotasClosed" checked> Polígono cerrado (unir el último con el primero y calcular volumen aproximado)</label>
-      <button class="action-btn" id="btnTopoCotas">Calcular cotas de corte</button>
-      <div class="chem-result" id="topoCotasResult"></div>
+    <div class="subpanel" id="toposubpanel-grid">
+      <p class="stats-intro"><b>Paso 1 · Cuadrícula.</b> Indica dónde empieza (Norte y Este del primer punto) y la separación entre puntos: <b>dy</b> entre filas (hacia el Norte; usa negativo si bajas) y <b>dx</b> entre columnas (hacia el Este).</p>
+      <div class="tri-grid" style="grid-template-columns:1fr 1fr;">
+        <div><span class="field-label">Norte inicial (m)</span><input class="field" id="topoY0" type="number" step="any" value="0"></div>
+        <div><span class="field-label">Este inicial (m)</span><input class="field" id="topoX0" type="number" step="any" value="0"></div>
+        <div><span class="field-label">dy: entre filas (m)</span><input class="field" id="topoDy" type="number" step="any" value="10"></div>
+        <div><span class="field-label">dx: entre columnas (m)</span><input class="field" id="topoDx" type="number" step="any" value="10"></div>
+      </div>
+      <p class="stats-intro" style="margin-top:12px;"><b>Paso 2 · Cotas del terreno.</b> Una línea por fila de la cuadrícula, con la cota de cada punto separada por espacios. Ejemplo: 3 líneas de 3 cotas = 4 celdas (2 × 2).</p>
+      <textarea class="field-area" id="topoGridInput" placeholder="101.2 100.8 100.1&#10;100.9 100.4 99.7&#10;100.5 100.0 99.2"></textarea>
+      <p class="stats-intro" style="margin-top:12px;"><b>Paso 3 · Cota de diseño.</b></p>
+      <input class="field" id="topoZd" type="number" step="any" inputmode="decimal" placeholder="Cota de diseño (m), ej: 100.50">
+      <div class="pts-actions" style="margin-top:10px;">
+        <button class="add-btn" id="btnTopoGridExample">Cargar ejemplo</button>
+      </div>
+      <button class="action-btn" id="btnTopoVolume" style="margin-top:0;">Calcular volúmenes</button>
+      <div class="chem-result" id="topoVolumeResult"></div>
     </div>
   </section>
 </div>
@@ -2916,24 +2966,76 @@
 
 
 /* ===== NÚCLEO TOPOGRAFÍA ===== */
-function topoParsePoints(text, minNums){
+function topoParseNum(tok){
+  tok = String(tok).trim().replace(/\s+/g, '');
+  if(!/^[+-]?[\d.,]+$/.test(tok) || !/\d/.test(tok)) return NaN;
+  const hasDot = tok.indexOf('.') >= 0, hasCom = tok.indexOf(',') >= 0;
+  let s = tok;
+  if(hasDot && hasCom){
+    if(tok.lastIndexOf(',') > tok.lastIndexOf('.')) s = tok.replace(/\./g, '').replace(',', '.');
+    else s = tok.replace(/,/g, '');
+  } else if(hasCom){
+    s = (tok.match(/,/g).length > 1) ? tok.replace(/,/g, '') : tok.replace(',', '.');
+  } else if(hasDot && tok.match(/\./g).length > 1){
+    s = tok.replace(/\./g, '');
+  }
+  const x = Number(s);
+  return isFinite(x) ? x : NaN;
+}
+function topoSplitLine(line){
+  line = line.trim();
+  if(/[;\t]/.test(line)) return line.split(/[;\t]+/).map(s => s.trim()).filter(Boolean);
+  if(/\s/.test(line)) return line.split(/\s+/).map(s => s.replace(/,$/, '')).filter(Boolean);
+  return line.split(',').map(s => s.trim()).filter(Boolean);
+}
+function topoParseMatrix(text){
   const rows = [];
-  text.split(/\r?\n/).forEach(line => {
-    line = line.trim();
-    if(!line) return;
-    let toks;
-    if(/[\s;]/.test(line)){
-      line = line.replace(/,(?=\s|$)/g, ' ').replace(/,/g, '.');
-      toks = line.split(/[\s;]+/).filter(Boolean);
-    } else {
-      toks = line.split(',').filter(Boolean);
-    }
-    let i = 0;
-    while(i < toks.length && !isFinite(Number(toks[i]))) i++;
-    const nums = toks.slice(i).map(Number).filter(n => isFinite(n));
-    if(nums.length >= minNums) rows.push(nums);
+  text.split(/\r?\n/).forEach((raw, idx) => {
+    if(!raw.trim()) return;
+    const toks = topoSplitLine(raw), nums = toks.map(topoParseNum);
+    const bad = nums.findIndex(x => !isFinite(x));
+    if(bad >= 0) throw new Error('Línea ' + (idx+1) + ': «' + toks[bad] + '» no es un número.');
+    rows.push(nums);
   });
   return rows;
+}
+function topoParseImport(text, fmt){
+  const hasName = fmt.charAt(0) === 'P';
+  const order = hasName ? fmt.slice(1) : fmt;
+  const nName = hasName ? 1 : 0;
+  const pts = [], bad = [], notes = [];
+  let first = true;
+  text.split(/\r?\n/).forEach((raw, idx) => {
+    if(!raw.trim()) return;
+    const toks = topoSplitLine(raw);
+    if(first){
+      first = false;
+      if(!toks.some(t => isFinite(topoParseNum(t)))){ notes.push('Línea ' + (idx+1) + ' ignorada (parece un encabezado).'); return; }
+    }
+    if(toks.length < nName + 2 || toks.length > nName + 3){
+      bad.push({ line: idx+1, text: raw.trim(), why: 'tiene ' + toks.length + ' valores y se esperaban ' + (nName+2) + ' o ' + (nName+3) }); return;
+    }
+    const vals = toks.slice(nName), nums = vals.map(topoParseNum);
+    const k = nums.findIndex(x => !isFinite(x));
+    if(k >= 0){ bad.push({ line: idx+1, text: raw.trim(), why: '«' + vals[k] + '» no es un número' }); return; }
+    const o = {}; o[order.charAt(0)] = nums[0]; o[order.charAt(1)] = nums[1];
+    pts.push({ n:o.N, e:o.E, z: nums.length > 2 ? nums[2] : null });
+  });
+  return { pts, bad, notes };
+}
+function topoDedupe(pts){
+  const notes = [], out = [];
+  pts.forEach(p => {
+    const prev = out[out.length-1];
+    if(prev && prev.n === p.n && prev.e === p.e){ notes.push(p.label + ' repite las coordenadas del punto anterior; se ignoró.'); return; }
+    out.push(p);
+  });
+  if(out.length > 3){
+    const f = out[0], l = out[out.length-1];
+    if(f.n === l.n && f.e === l.e){ out.pop(); notes.push(l.label + ' repetía el primer punto; se ignoró (el polígono se cierra solo).'); }
+  }
+  out.forEach((p, i) => { p.name = 'P' + (i+1); });
+  return { pts: out, notes };
 }
 
 function topoPolygonStats(pts){
@@ -3008,55 +3110,293 @@ function topoGridZeroPoints(z, x0, y0, dx, dy, zd){
   return pts;
 }
 
-function topoZeroPointsPath(pts, zd, closed){
-  const out=[], n=pts.length, m = closed ? n : n-1;
-  for(let i=0;i<m;i++){
-    const a=pts[i], b=pts[(i+1)%n];
-    const ha=a[2]-zd, hb=b[2]-zd;
-    if(ha*hb < 0){
-      const t = ha/(ha-hb);
-      out.push({ from:i+1, to:((i+1)%n)+1, e:a[0]+t*(b[0]-a[0]), n:a[1]+t*(b[1]-a[1]), dist:t*Math.hypot(b[0]-a[0], b[1]-a[1]) });
+function topoEarClip(pts){
+  const n = pts.length;
+  if(n < 3) throw new Error('Se necesitan al menos 3 puntos.');
+  const cross = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const dist = (p,q) => Math.hypot(p[0]-q[0], p[1]-q[1]);
+  const ang = (x,y,z) => (x*y === 0) ? 0 : Math.acos(Math.max(-1, Math.min(1, (x*x+y*y-z*z)/(2*x*y))));
+  const minAngle = (a,b,c) => { const ab=dist(a,b), bc=dist(b,c), ca=dist(c,a); return Math.min(ang(ab,ca,bc), ang(ab,bc,ca), ang(bc,ca,ab)); };
+  let s2 = 0;
+  for(let i=0;i<n;i++){ const A=pts[i], B=pts[(i+1)%n]; s2 += A[0]*B[1]-B[0]*A[1]; }
+  let idx = [...Array(n).keys()];
+  if(s2 < 0) idx.reverse();
+  const tris = [];
+  const findEar = strict => {
+    let best = -1, bestScore = -1;
+    for(let k=0;k<idx.length;k++){
+      const ip = idx[(k+idx.length-1)%idx.length], ic = idx[k], inx = idx[(k+1)%idx.length];
+      const a = pts[ip], b = pts[ic], c = pts[inx];
+      if(cross(a,b,c) <= 1e-12) continue;
+      let ok = true;
+      for(const q of idx){
+        if(q===ip || q===ic || q===inx) continue;
+        const p = pts[q], e = strict ? 1e-12 : 0;
+        const d1 = cross(a,b,p), d2 = cross(b,c,p), d3 = cross(c,a,p);
+        if(strict ? (d1>e && d2>e && d3>e) : (d1>=0 && d2>=0 && d3>=0)){ ok = false; break; }
+      }
+      if(!ok) continue;
+      const sc = minAngle(a,b,c);
+      if(sc > bestScore){ bestScore = sc; best = k; }
+    }
+    return best;
+  };
+  while(idx.length > 3){
+    let k = findEar(false);
+    if(k < 0) k = findEar(true);
+    if(k < 0) throw new Error('No se pudo triangular el polígono (¿se cruza consigo mismo o hay puntos alineados?). Revisa el orden de los puntos.');
+    tris.push([idx[(k+idx.length-1)%idx.length], idx[k], idx[(k+1)%idx.length]]);
+    idx.splice(k, 1);
+  }
+  tris.push([idx[0], idx[1], idx[2]]);
+  return tris;
+}
+
+function topoPolyArea(poly){
+  let s = 0;
+  for(let i=0;i<poly.length;i++){ const a=poly[i], b=poly[(i+1)%poly.length]; s += a.x*b.y - b.x*a.y; }
+  return Math.abs(s)/2;
+}
+function topoPolyCentroid(poly){
+  const x0 = poly[0].x, y0 = poly[0].y; let a2=0, cx=0, cy=0;
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i], b=poly[(i+1)%poly.length];
+    const xi=a.x-x0, yi=a.y-y0, xj=b.x-x0, yj=b.y-y0, cr=xi*yj-xj*yi;
+    a2 += cr; cx += (xi+xj)*cr; cy += (yi+yj)*cr;
+  }
+  if(Math.abs(a2) < 1e-15){ const m = poly.length; return [poly.reduce((s,p)=>s+p.x,0)/m, poly.reduce((s,p)=>s+p.y,0)/m]; }
+  return [x0 + cx/(3*a2), y0 + cy/(3*a2)];
+}
+function topoClipPoly(poly, sign){
+  const out = [];
+  for(let i=0;i<poly.length;i++){
+    const a = poly[i], b = poly[(i+1)%poly.length];
+    const sa = a.h*sign, sb = b.h*sign;
+    if(sa >= 0) out.push(a);
+    if((sa > 0 && sb < 0) || (sa < 0 && sb > 0)){
+      const t = a.h/(a.h-b.h);
+      out.push({ x:a.x+t*(b.x-a.x), y:a.y+t*(b.y-a.y), h:0 });
     }
   }
   return out;
 }
 
-function topoEarClip(pts){
-  const n = pts.length;
-  const cross = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
-  const inside = (p,a,b,c) => cross(a,b,p)>=0 && cross(b,c,p)>=0 && cross(c,a,p)>=0;
-  let idx = [...Array(n).keys()];
-  let s2 = 0;
-  for(let i=0;i<n;i++){ const A=pts[i], B=pts[(i+1)%n]; s2 += A[0]*B[1]-B[0]*A[1]; }
-  if(s2 < 0) idx.reverse();
-  const tris = [];
-  let guard = 0;
-  while(idx.length > 3 && guard++ < 10000){
-    let clipped = false;
-    for(let k=0;k<idx.length;k++){
-      const ip=idx[(k+idx.length-1)%idx.length], ic=idx[k], inx=idx[(k+1)%idx.length];
-      const a=pts[ip], b=pts[ic], c=pts[inx];
-      if(cross(a,b,c) <= 1e-12) continue;
-      let ok = true;
-      for(const q of idx){ if(q===ip||q===ic||q===inx) continue; if(inside(pts[q],a,b,c)){ ok=false; break; } }
-      if(!ok) continue;
-      tris.push([ip,ic,inx]); idx.splice(k,1); clipped = true; break;
+function topoAnalyze(P, zd){
+  const n = P.length, EPS = 1e-9;
+  const tris = topoEarClip(P.map(p => [p.e, p.n]));
+  const h = P.map(p => p.z - zd);
+  const nm = i => 'P' + (i+1);
+  const T = tris.map((v, t) => {
+    const [i,j,k] = v;
+    const A = Math.abs((P[j].e-P[i].e)*(P[k].n-P[i].n) - (P[k].e-P[i].e)*(P[j].n-P[i].n))/2;
+    const r = topoTri(A, h[i], h[j], h[k]);
+    const poly = v.map(q => ({ x:P[q].e, y:P[q].n, h:h[q] }));
+    const o = { id:t+1, v, A, cut:r.cut, fill:r.fill, aCut:r.aCut, aFill:r.aFill, seg:null };
+    o.polyCut = r.aCut > 1e-9*A ? topoClipPoly(poly, 1) : null;
+    o.polyFill = r.aFill > 1e-9*A ? topoClipPoly(poly, -1) : null;
+    const zp = [];
+    const add = (x,y) => { if(!zp.some(q => Math.hypot(q[0]-x, q[1]-y) < 1e-9*(1+Math.abs(x)+Math.abs(y)))) zp.push([x,y]); };
+    for(let q=0;q<3;q++){
+      const a = v[q], b = v[(q+1)%3];
+      if(Math.abs(h[a]) < EPS) add(P[a].e, P[a].n);
+      if(h[a]*h[b] < 0){ const s = h[a]/(h[a]-h[b]); add(P[a].e+s*(P[b].e-P[a].e), P[a].n+s*(P[b].n-P[a].n)); }
     }
-    if(!clipped) throw new Error('No se pudo triangular el polígono (¿se cruza consigo mismo?).');
+    if(zp.length === 2) o.seg = zp;
+    return o;
+  });
+  const parent = {};
+  const find = x => { while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+  const union = (a,b) => { a = find(a); b = find(b); if(a !== b) parent[b] = a; };
+  const node = (t,s) => t + (s > 0 ? '+' : '-');
+  T.forEach((o,t) => { if(o.polyCut) parent[node(t,1)] = node(t,1); if(o.polyFill) parent[node(t,-1)] = node(t,-1); });
+  const edges = new Map();
+  T.forEach((o,t) => { for(let q=0;q<3;q++){ const a=o.v[q], b=o.v[(q+1)%3]; const key = Math.min(a,b)+'-'+Math.max(a,b); if(!edges.has(key)) edges.set(key, []); edges.get(key).push(t); } });
+  edges.forEach((ts, key) => {
+    if(ts.length !== 2) return;
+    const [a,b] = key.split('-').map(Number);
+    [1,-1].forEach(s => {
+      if(h[a]*s > EPS || h[b]*s > EPS){
+        const n1 = node(ts[0],s), n2 = node(ts[1],s);
+        if(parent[n1] !== undefined && parent[n2] !== undefined) union(n1, n2);
+      }
+    });
+  });
+  const groups = {};
+  T.forEach((o,t) => [1,-1].forEach(s => {
+    const nd = node(t,s); if(parent[nd] === undefined) return;
+    const root = find(nd);
+    const g = groups[root] || (groups[root] = { sign:s, area:0, vol:0, tris:[], cx:0, cy:0, pa:0 });
+    const poly = s > 0 ? o.polyCut : o.polyFill, pa = topoPolyArea(poly), c = topoPolyCentroid(poly);
+    g.area += s > 0 ? o.aCut : o.aFill; g.vol += s > 0 ? o.cut : o.fill; g.tris.push(o.id);
+    g.cx += c[0]*pa; g.cy += c[1]*pa; g.pa += pa;
+  }));
+  const all = Object.keys(groups).map(k => groups[k]).sort((a,b) => a.tris[0] - b.tris[0]);
+  let nc = 0, nf = 0;
+  all.forEach(g => { g.label = g.sign > 0 ? 'Corte ' + (++nc) : 'Relleno ' + (++nf); if(g.pa > 0){ g.cx /= g.pa; g.cy /= g.pa; } });
+  const zones = all.filter(g => g.sign > 0).concat(all.filter(g => g.sign < 0));
+  const crossings = [];
+  const isBoundary = (a,b) => { const d = Math.abs(a-b); return d === 1 || d === n-1; };
+  for(let i=0;i<n;i++){
+    const j = (i+1)%n;
+    if(Math.abs(h[i]) < EPS) crossings.push({ e:P[i].e, n:P[i].n, where:'Vértice ' + nm(i) + ' (ya está en la cota de diseño)' });
+    if(h[i]*h[j] < 0){
+      const s = h[i]/(h[i]-h[j]), len = Math.hypot(P[j].e-P[i].e, P[j].n-P[i].n);
+      crossings.push({ e:P[i].e+s*(P[j].e-P[i].e), n:P[i].n+s*(P[j].n-P[i].n), where:'Lado ' + nm(i) + '–' + nm(j) + ' (a ' + (s*len).toFixed(3) + ' m de ' + nm(i) + ')' });
+    }
   }
-  tris.push([idx[0],idx[1],idx[2]]);
-  return tris;
+  const diag = [];
+  edges.forEach((ts, key) => { const [a,b] = key.split('-').map(Number); if(!isBoundary(a,b) && h[a]*h[b] < 0) diag.push([a,b]); });
+  diag.sort((p,q) => p[0]-q[0] || p[1]-q[1]).forEach(([a,b]) => {
+    const s = h[a]/(h[a]-h[b]);
+    crossings.push({ e:P[a].e+s*(P[b].e-P[a].e), n:P[a].n+s*(P[b].n-P[a].n), where:'Diagonal ' + nm(a) + '–' + nm(b) + ' (interior)' });
+  });
+  crossings.forEach((c,i) => { c.id = 'X' + (i+1); });
+  const sum = k => T.reduce((s,o) => s + o[k], 0);
+  const area = sum('A');
+  const zBalance = T.reduce((s,o) => s + o.A*(P[o.v[0]].z+P[o.v[1]].z+P[o.v[2]].z)/3, 0)/area;
+  const cut = sum('cut'), fill = sum('fill');
+  return { tris:T, zones, crossings, h, totals:{ area, cut, fill, aCut:sum('aCut'), aFill:sum('aFill'), balance:cut-fill, zBalance } };
 }
 
-function topoPolyVolume(p3, zd){
-  const tris = topoEarClip(p3.map(p => [p[0],p[1]]));
-  let cut=0, fill=0, aCut=0, aFill=0, area=0;
-  tris.forEach(([i,j,k]) => {
-    const A = Math.abs(((p3[j][0]-p3[i][0])*(p3[k][1]-p3[i][1]) - (p3[k][0]-p3[i][0])*(p3[j][1]-p3[i][1]))/2);
-    const r = topoTri(A, p3[i][2]-zd, p3[j][2]-zd, p3[k][2]-zd);
-    cut+=r.cut; fill+=r.fill; aCut+=r.aCut; aFill+=r.aFill; area+=A;
+function topoSelfIntersects(pts){
+  const n = pts.length;
+  const orient = (a,b,c) => { const v = (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0]); return v > 1e-12 ? 1 : v < -1e-12 ? -1 : 0; };
+  const onSeg = (a,b,c) => Math.min(a[0],b[0]) <= c[0] && c[0] <= Math.max(a[0],b[0]) && Math.min(a[1],b[1]) <= c[1] && c[1] <= Math.max(a[1],b[1]);
+  for(let i=0;i<n;i++){
+    const a = pts[i], b = pts[(i+1)%n];
+    for(let j=i+1;j<n;j++){
+      if((j+1)%n === i || (i+1)%n === j) continue;
+      const c = pts[j], d = pts[(j+1)%n];
+      const o1 = orient(a,b,c), o2 = orient(a,b,d), o3 = orient(c,d,a), o4 = orient(c,d,b);
+      if(o1 !== o2 && o3 !== o4) return true;
+      if(o1 === 0 && onSeg(a,b,c)) return true;
+      if(o2 === 0 && onSeg(a,b,d)) return true;
+      if(o3 === 0 && onSeg(c,d,a)) return true;
+      if(o4 === 0 && onSeg(c,d,b)) return true;
+    }
+  }
+  return false;
+}
+
+function topoNiceStep(range, target){
+  const raw = range/target, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw/p;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10)*p;
+}
+function topoBuildSvg(P, zd, an){
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const r1 = v => (Math.round(v*10)/10).toString();
+  const W = 360, ml = 50, mr = 14, mt = 30, mb = 42;
+  const es = P.map(p => p.e), ns = P.map(p => p.n);
+  let eMin = Math.min(...es), eMax = Math.max(...es), nMin = Math.min(...ns), nMax = Math.max(...ns);
+  const span = Math.max(eMax-eMin, nMax-nMin) || 1, pad = span*0.1;
+  eMin -= pad; eMax += pad; nMin -= pad; nMax += pad;
+  const dE = eMax-eMin, dN = nMax-nMin, plotW = W-ml-mr;
+  const plotH = Math.max(170, Math.min(430, plotW*dN/dE));
+  const sc = Math.min(plotW/dE, plotH/dN);
+  const offX = (plotW-dE*sc)/2, offY = (plotH-dN*sc)/2;
+  const X = e => ml+offX+(e-eMin)*sc, Y = n => mt+offY+(nMax-n)*sc;
+  const H = mt+plotH+mb;
+  const gL = X(eMin), gR = X(eMax), gT = Y(nMax), gB = Y(nMin);
+  const o = [];
+  o.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Planta del polígono con la cota de diseño" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">');
+  o.push('<rect width="'+W+'" height="'+H+'" rx="10" fill="#0c1210"/>');
+  const dec = st => st >= 1 ? 0 : Math.min(3, Math.ceil(-Math.log10(st)));
+  const sE = topoNiceStep(dE, 4), sN = topoNiceStep(dN, 4);
+  o.push('<rect x="'+r1(gL)+'" y="'+r1(gT)+'" width="'+r1(gR-gL)+'" height="'+r1(gB-gT)+'" fill="none" stroke="#7ee787" stroke-opacity="0.18"/>');
+  for(let v = Math.ceil(eMin/sE)*sE; v <= eMax+1e-9; v += sE){
+    o.push('<line x1="'+r1(X(v))+'" y1="'+r1(gT)+'" x2="'+r1(X(v))+'" y2="'+r1(gB)+'" stroke="#7ee787" stroke-opacity="0.10"/>');
+    o.push('<text x="'+r1(X(v))+'" y="'+r1(gB+11)+'" font-size="8.5" fill="#9aa0a6" text-anchor="middle">'+v.toFixed(dec(sE))+'</text>');
+  }
+  for(let v = Math.ceil(nMin/sN)*sN; v <= nMax+1e-9; v += sN){
+    o.push('<line x1="'+r1(gL)+'" y1="'+r1(Y(v))+'" x2="'+r1(gR)+'" y2="'+r1(Y(v))+'" stroke="#7ee787" stroke-opacity="0.10"/>');
+    o.push('<text transform="translate('+r1(gL-4)+' '+r1(Y(v))+') rotate(-90)" font-size="8.5" fill="#9aa0a6" text-anchor="middle">'+v.toFixed(dec(sN))+'</text>');
+  }
+  o.push('<text x="'+ml+'" y="13" font-size="10" fill="#e7e9ec" font-weight="600">Planta'+(an ? ' · cota de diseño = '+zd.toFixed(3)+' m' : '')+'</text>');
+  o.push('<text x="'+r1(gR)+'" y="'+r1(gB+22)+'" font-size="8.5" fill="#9aa0a6" text-anchor="end">Este (m)</text>');
+  o.push('<text x="'+r1(gL-34)+'" y="'+r1(gT-4)+'" font-size="8.5" fill="#9aa0a6">Norte (m)</text>');
+  o.push('<g transform="translate('+(W-22)+' 6)"><polygon points="0,0 -4,11 0,8.5 4,11" fill="#e7e9ec"/><text x="0" y="21" font-size="8.5" fill="#e7e9ec" text-anchor="middle">N</text></g>');
+  if(an){
+    an.tris.forEach(t => {
+      o.push('<polygon points="'+t.v.map(q => r1(X(P[q].e))+','+r1(Y(P[q].n))).join(' ')+'" fill="none" stroke="#7ee787" stroke-opacity="0.22" stroke-width="0.7"/>');
+    });
+    an.tris.forEach(t => {
+      if(t.polyCut) o.push('<polygon points="'+t.polyCut.map(p => r1(X(p.x))+','+r1(Y(p.y))).join(' ')+'" fill="#ff8a65" fill-opacity="0.42"/>');
+      if(t.polyFill) o.push('<polygon points="'+t.polyFill.map(p => r1(X(p.x))+','+r1(Y(p.y))).join(' ')+'" fill="#64b5f6" fill-opacity="0.42"/>');
+    });
+  }
+  o.push('<polygon points="'+P.map(p => r1(X(p.e))+','+r1(Y(p.n))).join(' ')+'" fill="'+(an ? 'none' : 'rgba(126,231,135,0.10)')+'" stroke="#e7e9ec" stroke-width="1.6" stroke-linejoin="round"/>');
+  if(an){
+    an.tris.forEach(t => { if(t.seg) o.push('<line x1="'+r1(X(t.seg[0][0]))+'" y1="'+r1(Y(t.seg[0][1]))+'" x2="'+r1(X(t.seg[1][0]))+'" y2="'+r1(Y(t.seg[1][1]))+'" stroke="#ffd54f" stroke-width="1.8" stroke-dasharray="5 3"/>'); });
+    an.zones.forEach(z => {
+      if(z.pa > 0) o.push('<text x="'+r1(X(z.cx))+'" y="'+r1(Y(z.cy))+'" font-size="9" font-weight="700" text-anchor="middle" fill="'+(z.sign > 0 ? '#ffb199' : '#9fd0fa')+'" stroke="#0c1210" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round">'+esc(z.label)+'</text>');
+    });
+  }
+  const cx = es.reduce((s,v) => s+v, 0)/es.length, cy = ns.reduce((s,v) => s+v, 0)/ns.length;
+  P.forEach((p,i) => {
+    const px = X(p.e), py = Y(p.n);
+    let dx = px - X(cx), dy = py - Y(cy); const L = Math.hypot(dx,dy) || 1; dx /= L; dy /= L;
+    const col = !an ? '#7ee787' : (an.h[i] > 1e-9 ? '#ff8a65' : an.h[i] < -1e-9 ? '#64b5f6' : '#e7e9ec');
+    o.push('<circle cx="'+r1(px)+'" cy="'+r1(py)+'" r="3.4" fill="'+col+'" stroke="#0c1210" stroke-width="1"/>');
+    const lx = px + dx*9, ly = py + dy*9 + (dy < 0 ? -9 : 3);
+    const anchor = dx > 0.35 ? 'start' : dx < -0.35 ? 'end' : 'middle';
+    o.push('<text x="'+r1(lx)+'" y="'+r1(ly)+'" font-size="9" fill="#e7e9ec" font-weight="700" text-anchor="'+anchor+'" stroke="#0c1210" stroke-width="2.4" paint-order="stroke">'+esc(p.name)+'</text>');
+    if(p.z != null) o.push('<text x="'+r1(lx)+'" y="'+r1(ly+9)+'" font-size="8" fill="#9aa0a6" text-anchor="'+anchor+'" stroke="#0c1210" stroke-width="2.2" paint-order="stroke">'+p.z.toFixed(2)+'</text>');
   });
-  return { cut, fill, aCut, aFill, area, tris:tris.length, balance:cut-fill };
+  if(an){
+    an.crossings.forEach(c => {
+      o.push('<circle cx="'+r1(X(c.e))+'" cy="'+r1(Y(c.n))+'" r="3" fill="#ffd54f" stroke="#0c1210" stroke-width="1"/>');
+      o.push('<text x="'+r1(X(c.e)+5)+'" y="'+r1(Y(c.n)-4)+'" font-size="8.5" font-weight="700" fill="#ffd54f" stroke="#0c1210" stroke-width="2.4" paint-order="stroke">'+c.id+'</text>');
+    });
+  }
+  const raw = 0.3*plotW/sc, pw = Math.pow(10, Math.floor(Math.log10(raw)));
+  const L = [5,2,1].map(m => m*pw).find(v => v <= raw) || pw;
+  const bx = ml, by = H-10, bl = L*sc;
+  o.push('<path d="M'+r1(bx)+' '+(by-4)+' V'+by+' H'+r1(bx+bl)+' V'+(by-4)+'" fill="none" stroke="#e7e9ec" stroke-width="1.2"/>');
+  o.push('<text x="'+r1(bx+bl+5)+'" y="'+by+'" font-size="8.5" fill="#e7e9ec">'+(Math.round(L*1000)/1000)+' m</text>');
+  o.push('</svg>');
+  return o.join('');
+}
+
+/* ===== MOVIMIENTO CIRCULAR UNIFORME ===== */
+function mcuSolve(vals){
+  const k = Object.assign({}, vals), PI2 = 2*Math.PI, derived = {};
+  const has = x => k[x] != null;
+  const rules = [
+    ['f',['T'],()=>1/k.T], ['T',['f'],()=>1/k.f],
+    ['f',['rpm'],()=>k.rpm/60], ['rpm',['f'],()=>k.f*60],
+    ['w',['f'],()=>PI2*k.f], ['f',['w'],()=>k.w/PI2],
+    ['v',['w','r'],()=>k.w*k.r], ['w',['v','r'],()=>k.v/k.r], ['r',['v','w'],()=>k.v/k.w],
+    ['a',['w','r'],()=>k.w*k.w*k.r], ['w',['a','r'],()=>Math.sqrt(k.a/k.r)], ['r',['a','w'],()=>k.a/(k.w*k.w)],
+    ['a',['v','r'],()=>k.v*k.v/k.r], ['v',['a','r'],()=>Math.sqrt(k.a*k.r)], ['r',['v','a'],()=>k.v*k.v/k.a],
+    ['th',['w','t'],()=>k.w*k.t], ['w',['th','t'],()=>k.th/k.t], ['t',['th','w'],()=>k.th/k.w],
+    ['n',['th'],()=>k.th/PI2], ['th',['n'],()=>k.n*PI2],
+    ['thd',['th'],()=>k.th*180/Math.PI], ['th',['thd'],()=>k.thd*Math.PI/180],
+    ['s',['th','r'],()=>k.th*k.r], ['th',['s','r'],()=>k.s/k.r], ['r',['s','th'],()=>k.s/k.th],
+    ['F',['m','a'],()=>k.m*k.a], ['m',['F','a'],()=>k.F/k.a], ['a',['F','m'],()=>k.F/k.m]
+  ];
+  let changed = true, guard = 0;
+  while(changed && guard++ < 60){
+    changed = false;
+    rules.forEach(([tg, deps, fn]) => {
+      if(!has(tg) && deps.every(has)){
+        const v = fn();
+        if(isFinite(v)){ k[tg] = v; derived[tg] = true; changed = true; }
+      }
+    });
+  }
+  const checks = [
+    ['f = 1/T', ['f','T'], () => [k.f, 1/k.T]], ['f = rpm/60', ['f','rpm'], () => [k.f, k.rpm/60]],
+    ['ω = 2π·f', ['w','f'], () => [k.w, PI2*k.f]], ['v = ω·r', ['v','w','r'], () => [k.v, k.w*k.r]],
+    ['aₙ = ω²·r', ['a','w','r'], () => [k.a, k.w*k.w*k.r]], ['aₙ = v²/r', ['a','v','r'], () => [k.a, k.v*k.v/k.r]],
+    ['θ = ω·t', ['th','w','t'], () => [k.th, k.w*k.t]], ['n = θ/2π', ['n','th'], () => [k.n, k.th/PI2]],
+    ['θ(°) = θ·180/π', ['thd','th'], () => [k.thd, k.th*180/Math.PI]], ['s = θ·r', ['s','th','r'], () => [k.s, k.th*k.r]],
+    ['F = m·aₙ', ['F','m','a'], () => [k.F, k.m*k.a]]
+  ];
+  const bad = [];
+  checks.forEach(([name, deps, fn]) => {
+    if(deps.every(has)){ const [l, r] = fn(); if(Math.abs(l-r) > 1e-6*Math.max(1, Math.abs(l), Math.abs(r))) bad.push(name); }
+  });
+  return { values:k, derived, inconsistent:bad };
 }
 
 /* ===== NÚCLEO QUÍMICA (soluciones) ===== */
@@ -3301,119 +3641,260 @@ function equilCompute(sp, K){
   });
 
   function fx(x, d){ const lim = 0.5*Math.pow(10, -d); return (Math.abs(x) < lim ? 0 : x).toFixed(d); }
-  function topoTable(headers, rows, extraClass){
+  function topoTable(headers, rows){
     return '<div class="scroll-x"><table class="topo-table"><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr>' +
       rows.map(r => '<tr>' + r.map(c => '<td' + (c && c.cls ? ' class="' + c.cls + '"' : '') + '>' + (c && c.v !== undefined ? c.v : c) + '</td>').join('') + '</tr>').join('') +
       '</table></div>';
   }
-  function topoErr(out, e){ out.innerHTML = '<span class="chem-error">' + escHtml(e.message) + '</span>'; }
+  function topoErr(out, e){ out.innerHTML = '<span class="chem-error">' + escHtml(e.message).replace(/\n/g, '<br>') + '</span>'; }
+  const topoInfo = t => '<div class="stat-note" style="padding:0; margin-top:6px; color:var(--accent);">' + escHtml(t) + '</div>';
+  const topoWarn = t => '<div class="stat-note" style="padding:0; margin-top:6px; color:#ffd54f;">⚠ ' + escHtml(t) + '</div>';
 
-  document.getElementById('btnTopoArea').addEventListener('click', () => {
-    const out = document.getElementById('topoAreaResult');
+  // ---- Tabla de puntos (Norte, Este, Cota) ----
+  let topoRows = [];
+  const topoBlank = () => ({ n:'', e:'', z:'' });
+  function topoResetRows(k){ topoRows = []; for(let i=0;i<k;i++) topoRows.push(topoBlank()); }
+  function topoRenderRows(){
+    document.getElementById('topoPtsRows').innerHTML = topoRows.map((r, i) => {
+      const L = 'P' + (i+1);
+      const inp = (c, ph, v) => '<input type="number" step="any" inputmode="decimal" data-i="' + i + '" data-c="' + c + '" value="' + escHtml(v) + '" placeholder="' + ph + '" aria-label="' + ph + ' de ' + L + '">';
+      return '<div class="pt-row"><span class="pt-lbl">' + L + '</span>' + inp('n','Norte',r.n) + inp('e','Este',r.e) + inp('z','Cota',r.z) +
+        '<button type="button" class="pt-del" data-del="' + i + '" aria-label="Quitar ' + L + '">×</button></div>';
+    }).join('');
+  }
+  topoResetRows(4); topoRenderRows();
+  const topoRowsBox = document.getElementById('topoPtsRows');
+  topoRowsBox.addEventListener('input', ev => {
+    const t = ev.target;
+    if(t && t.dataset && t.dataset.c !== undefined && topoRows[+t.dataset.i]) topoRows[+t.dataset.i][t.dataset.c] = t.value;
+  });
+  topoRowsBox.addEventListener('click', ev => {
+    const t = ev.target;
+    if(t && t.dataset && t.dataset.del !== undefined){
+      topoRows.splice(+t.dataset.del, 1);
+      while(topoRows.length < 3) topoRows.push(topoBlank());
+      topoRenderRows();
+    }
+  });
+  function topoClearOutputs(){
+    document.getElementById('topoPolyMsg').innerHTML = '';
+    const s = document.getElementById('topoPolySummary'); s.innerHTML = ''; s.style.display = 'none';
+    document.getElementById('topoGraph').innerHTML = '';
+    document.getElementById('topoPolyDetails').innerHTML = '';
+  }
+  document.getElementById('btnTopoAddPt').addEventListener('click', () => {
+    topoRows.push(topoBlank()); topoRenderRows();
+    const inp = topoRowsBox.querySelector && topoRowsBox.querySelector('[data-i="' + (topoRows.length-1) + '"][data-c="n"]');
+    if(inp && inp.focus) inp.focus();
+  });
+  document.getElementById('btnTopoClear').addEventListener('click', () => {
+    topoResetRows(4); topoRenderRows(); topoClearOutputs();
+  });
+  document.getElementById('btnTopoExample').addEventListener('click', () => {
+    const ex = [[870000,1060000,1002.4],[870000,1060040,1001.1],[870030,1060050,999.8],[870050,1060020,1000.6],[870025,1059995,1002.0]];
+    topoRows = ex.map(r => ({ n:String(r[0]), e:String(r[1]), z:String(r[2]) }));
+    topoRenderRows(); topoClearOutputs();
+    document.getElementById('topoPolyZd').value = '1001';
+    document.getElementById('topoPolyMsg').innerHTML = topoInfo('Ejemplo cargado: pentágono con cota de diseño 1001.00 m. Pulsa «Calcular y graficar».');
+  });
+  document.getElementById('btnTopoPaste').addEventListener('click', () => {
+    const b = document.getElementById('topoPasteBox');
+    b.style.display = (b.style.display === 'none') ? '' : 'none';
+  });
+  document.getElementById('btnTopoPasteApply').addEventListener('click', () => {
+    const msg = document.getElementById('topoPasteMsg');
     try {
-      const order = document.getElementById('topoAreaOrder').value;
-      const rows = topoParsePoints(document.getElementById('topoAreaInput').value, 2);
-      if(rows.length < 3) throw new Error('Ingresa al menos 3 puntos, uno por línea.');
-      let pts = rows.map(r => order === 'EN' ? [r[0], r[1]] : [r[1], r[0]]); // [Este, Norte]
-      const f = pts[0], l = pts[pts.length-1];
-      if(pts.length > 3 && f[0] === l[0] && f[1] === l[1]) pts.pop();
-      const st = topoPolygonStats(pts);
-      if(st.area === 0) throw new Error('Los puntos son colineales: el área es 0.');
-      const sum = [
+      const r = topoParseImport(document.getElementById('topoPasteText').value, document.getElementById('topoPasteFmt').value);
+      if(r.bad.length){
+        msg.innerHTML = '<span class="chem-error">No se cargó nada porque hay líneas que no se pudieron leer (corrígelas y vuelve a intentar):<br>' +
+          r.bad.slice(0, 6).map(b => 'Línea ' + b.line + ': «' + escHtml(b.text) + '» — ' + escHtml(b.why)).join('<br>') +
+          (r.bad.length > 6 ? '<br>…y ' + (r.bad.length - 6) + ' más.' : '') + '</span>';
+        return;
+      }
+      if(!r.pts.length) throw new Error('No se encontró ningún punto en el texto.');
+      topoRows = r.pts.map(p => ({ n:String(p.n), e:String(p.e), z: p.z == null ? '' : String(p.z) }));
+      topoRenderRows(); topoClearOutputs();
+      document.getElementById('topoPasteBox').style.display = 'none';
+      msg.innerHTML = '';
+      document.getElementById('topoPolyMsg').innerHTML = topoInfo('Se cargaron ' + r.pts.length + ' puntos en la tabla.' + (r.notes.length ? ' ' + r.notes.join(' ') : ''));
+    } catch(e){ topoErr(msg, e); }
+  });
+
+  function topoReadRows(){
+    const errs = [], pts = [];
+    topoRows.forEach((r, i) => {
+      if(r.n === '' && r.e === '' && r.z === '') return;
+      const L = 'P' + (i+1);
+      const n = r.n === '' ? NaN : Number(r.n), e = r.e === '' ? NaN : Number(r.e);
+      if(!isFinite(n)) errs.push(L + ': falta el Norte.');
+      if(!isFinite(e)) errs.push(L + ': falta el Este.');
+      let z = null;
+      if(r.z !== ''){ z = Number(r.z); if(!isFinite(z)){ errs.push(L + ': la cota no es un número.'); z = null; } }
+      if(isFinite(n) && isFinite(e)) pts.push({ n, e, z, label: L });
+    });
+    return { pts, errs };
+  }
+
+  document.getElementById('btnTopoPoly').addEventListener('click', () => {
+    const msg = document.getElementById('topoPolyMsg');
+    const sum = document.getElementById('topoPolySummary');
+    topoClearOutputs();
+    try {
+      const rd = topoReadRows();
+      if(rd.errs.length) throw new Error(rd.errs.join('\n'));
+      if(rd.pts.length < 3) throw new Error('Escribe al menos 3 puntos (Norte, Este y Cota de cada vértice).');
+      const dd = topoDedupe(rd.pts), P = dd.pts;
+      if(P.length < 3) throw new Error('Después de quitar puntos repetidos quedan menos de 3 puntos.');
+      const notes = dd.notes.map(topoInfo), warns = [];
+      const xy = P.map(p => [p.e, p.n]);
+      const st = topoPolygonStats(xy);
+      const crosses = topoSelfIntersects(xy);
+      if(st.area === 0) throw new Error(crosses
+        ? 'El polígono se cruza consigo mismo (forma de «moño»): revisa que los puntos estén en orden alrededor del perímetro.'
+        : 'Los puntos están alineados: el área es 0.');
+      if(crosses) warns.push('El polígono se cruza consigo mismo: revisa que los puntos estén en orden alrededor del perímetro. Con este orden el área no es confiable.');
+      const zd = numOrNull('topoPolyZd');
+      const missingZ = P.filter(p => p.z == null).map(p => p.name);
+      let an = null;
+      if(zd != null && missingZ.length === 0 && !crosses){
+        try { an = topoAnalyze(P, zd); } catch(e){ warns.push(e.message); }
+      } else if(zd != null && missingZ.length){
+        warns.push('Faltan las cotas de: ' + missingZ.join(', ') + '. Se muestra solo el área; completa las cotas para calcular cortes y rellenos.');
+      } else if(zd == null && missingZ.length === 0){
+        notes.push(topoInfo('Escribe la cota de diseño (paso 2) para calcular cortes, rellenos y cruces.'));
+      }
+      const rows1 = [
+        ['Puntos usados', P.length],
         ['Área', fx(st.area, 3) + ' m²'],
         ['Área', fx(st.area/10000, 4) + ' ha'],
         ['Perímetro', fx(st.perimeter, 3) + ' m'],
-        ['Centroide (E, N)', fx(st.centroid[0], 3) + ', ' + fx(st.centroid[1], 3)],
-        ['Vértices', pts.length],
+        ['Centroide (Norte, Este)', fx(st.centroid[1], 3) + ', ' + fx(st.centroid[0], 3)],
         ['Sentido del recorrido', st.signed > 0 ? 'Antihorario' : 'Horario']
       ];
-      const sides = pts.map((p, i) => {
-        const q = pts[(i+1) % pts.length];
-        const dE = q[0]-p[0], dN = q[1]-p[1];
+      let html = '<div class="res-title" style="margin-top:0;">Polígono</div>' + resRows(rows1);
+      if(an){
+        const t = an.totals;
+        html += '<div class="res-title">Corte y relleno (cota de diseño = ' + fx(zd, 3) + ' m)</div>' + resRows([
+          ['Volumen de <span class="cut-c">CORTE</span>', fx(t.cut, 3) + ' m³'],
+          ['Área en corte', fx(t.aCut, 3) + ' m²'],
+          ['Volumen de <span class="fill-c">RELLENO</span>', fx(t.fill, 3) + ' m³'],
+          ['Área en relleno', fx(t.aFill, 3) + ' m²'],
+          ['Balance (corte − relleno)', fx(t.balance, 3) + ' m³' + (t.balance > 0.0005 ? ' (sobra material)' : (t.balance < -0.0005 ? ' (falta material)' : ''))],
+          ['Cota de diseño que compensa', fx(t.zBalance, 3) + ' m']
+        ]);
+      }
+      sum.innerHTML = html; sum.style.display = '';
+      msg.innerHTML = warns.map(topoWarn).join('') + notes.join('');
+
+      const legend = an
+        ? '<div class="legend"><span><i class="sw cut"></i>Corte</span><span><i class="sw fill"></i>Relleno</span><span><i class="sw zero"></i>Línea de cota de diseño</span><span><i class="sw dot"></i>X = puntos de cruce</span></div>'
+        : '';
+      document.getElementById('topoGraph').innerHTML = topoBuildSvg(P, zd, an) + legend;
+
+      let det = '';
+      if(an){
+        const wk = P.map((p, i) => {
+          const h = an.h[i], cls = h > 1e-9 ? 'cut-c' : (h < -1e-9 ? 'fill-c' : '');
+          return [{ v:p.name, cls:'lbl' }, fx(p.n, 3), fx(p.e, 3), fx(p.z, 3), { v:(h > 0 ? '+' : '') + fx(h, 3), cls }, { v: Math.abs(h) < 1e-9 ? 'EN COTA' : (h > 0 ? 'CORTE' : 'RELLENO'), cls }];
+        });
+        det += '<div class="res-title">1 · Cota de trabajo en cada punto</div>' +
+          '<div class="stat-note" style="padding:0;">Cota de trabajo = cota del terreno − cota de diseño. Positiva = hay que cortar; negativa = hay que rellenar.</div>' +
+          topoTable(['Punto', 'Norte', 'Este', 'Cota terreno', 'Cota trabajo', 'Tipo'], wk);
+        det += '<div class="res-title">2 · Puntos de cruce de la cota de diseño con el terreno natural</div>' +
+          (an.crossings.length
+            ? '<div class="stat-note" style="padding:0;">Son los puntos X1, X2… de la gráfica: ahí el terreno está exactamente a la cota de diseño (corte = 0).</div>' +
+              topoTable(['Punto', 'Norte', 'Este', 'Cota', 'Ubicación'], an.crossings.map(c => [{ v:c.id, cls:'lbl' }, fx(c.n, 3), fx(c.e, 3), fx(zd, 3), { v:c.where, cls:'lbl' }]))
+            : '<div class="stat-note" style="padding:0;">El terreno no cruza la cota de diseño: todo el polígono es ' + (an.totals.cut > 0 ? 'corte' : 'relleno') + '.</div>');
+        det += '<div class="res-title">3 · Zonas de corte y de relleno</div>' +
+          '<div class="stat-note" style="padding:0;">Cada zona es una región continua del polígono; su área y volumen se calculan por separado.</div>' +
+          topoTable(['Zona', 'Área (m²)', 'Volumen (m³)', 'Triángulos'], an.zones.map(z => [{ v:z.label, cls: z.sign > 0 ? 'cut-c lbl' : 'fill-c lbl' }, fx(z.area, 3), fx(z.vol, 3), { v:z.tris.join(', '), cls:'lbl' }]));
+        det += '<div class="res-title">4 · Detalle por triángulo</div>' +
+          '<div class="stat-note" style="padding:0;">El terreno se aproxima con triángulos entre los puntos que escribiste (prismas triangulares). Con más puntos la aproximación mejora.</div>' +
+          topoTable(['Tri.', 'Vértices', 'Área', 'Corte: área', 'Corte: vol.', 'Relleno: área', 'Relleno: vol.'],
+            an.tris.map(t => [t.id, { v:t.v.map(q => P[q].name).join('-'), cls:'lbl' }, fx(t.A, 3), fx(t.aCut, 3), fx(t.cut, 3), fx(t.aFill, 3), fx(t.fill, 3)]));
+      }
+      const sides = P.map((p, i) => {
+        const q = P[(i+1) % P.length], dE = q.e-p.e, dN = q.n-p.n;
         let az = Math.atan2(dE, dN)*180/Math.PI; if(az < 0) az += 360;
-        return [{v:(i+1) + '–' + (((i+1) % pts.length) + 1), cls:'lbl'}, fx(Math.hypot(dE, dN), 3), toDMS(az)];
+        return [{ v:p.name + '–' + q.name, cls:'lbl' }, fx(Math.hypot(dE, dN), 3), toDMS(az)];
       });
-      out.innerHTML = resRows(sum) + '<div class="res-title">Lados (distancia y azimut desde el Norte)</div>' +
-        topoTable(['Lado', 'Distancia (m)', 'Azimut'], sides);
-    } catch(e){ topoErr(out, e); }
+      det += '<div class="res-title">' + (an ? '5' : '1') + ' · Lados del polígono</div>' + topoTable(['Lado', 'Distancia (m)', 'Azimut (desde el Norte)'], sides);
+      document.getElementById('topoPolyDetails').innerHTML = det;
+    } catch(e){ topoErr(msg, e); }
   });
 
+  // ---- Cuadrícula ----
+  document.getElementById('btnTopoGridExample').addEventListener('click', () => {
+    document.getElementById('topoY0').value = '870000'; document.getElementById('topoX0').value = '1060000';
+    document.getElementById('topoDy').value = '10'; document.getElementById('topoDx').value = '10';
+    document.getElementById('topoZd').value = '1001';
+    document.getElementById('topoGridInput').value = '1002.4 1001.9 1001.2 1000.6\n1002.0 1001.5 1000.9 1000.3\n1001.6 1001.1 1000.5 999.9\n1001.2 1000.7 1000.1 999.5';
+    document.getElementById('topoVolumeResult').innerHTML = '';
+  });
   document.getElementById('btnTopoVolume').addEventListener('click', () => {
     const out = document.getElementById('topoVolumeResult');
     try {
       const x0 = numOrNull('topoX0') || 0, y0 = numOrNull('topoY0') || 0;
       const dx = numOrNull('topoDx'), dy = numOrNull('topoDy'), zd = numOrNull('topoZd');
-      if(dx == null || dy == null || dx === 0 || dy === 0) throw new Error('Ingresa dx y dy distintos de 0.');
+      if(dx == null || dy == null || dx === 0 || dy === 0) throw new Error('Ingresa la separación entre columnas (dx) y entre filas (dy), distintas de 0.');
       if(zd == null) throw new Error('Ingresa la cota de diseño.');
-      const z = topoParsePoints(document.getElementById('topoGridInput').value, 1);
+      const z = topoParseMatrix(document.getElementById('topoGridInput').value);
       if(z.length < 2) throw new Error('Necesitas al menos 2 filas de cotas.');
       const cols = z[0].length;
       if(cols < 2) throw new Error('Necesitas al menos 2 columnas de cotas.');
-      if(z.some(r => r.length !== cols)) throw new Error('Todas las filas deben tener la misma cantidad de cotas (' + cols + ').');
+      z.forEach((r, i) => { if(r.length !== cols) throw new Error('La fila ' + (i+1) + ' tiene ' + r.length + ' cotas y la primera tiene ' + cols + '. Todas las filas deben tener la misma cantidad.'); });
       const g = topoGridVolume(z, dx, dy, zd);
       const sum = [
         ['Celdas', g.cells + ' (' + (z.length-1) + ' × ' + (cols-1) + ')'],
         ['Área total', fx(g.area, 3) + ' m²'],
-        ['Volumen de CORTE', fx(g.cut, 3) + ' m³'],
-        ['Volumen de RELLENO', fx(g.fill, 3) + ' m³'],
-        ['Balance (corte − relleno)', fx(g.balance, 3) + ' m³' + (g.balance > 0 ? ' (sobra material)' : (g.balance < 0 ? ' (falta material)' : ''))],
+        ['Volumen de <span class="cut-c">CORTE</span>', fx(g.cut, 3) + ' m³'],
         ['Área en corte', fx(g.aCut, 3) + ' m²'],
+        ['Volumen de <span class="fill-c">RELLENO</span>', fx(g.fill, 3) + ' m³'],
         ['Área en relleno', fx(g.aFill, 3) + ' m²'],
+        ['Balance (corte − relleno)', fx(g.balance, 3) + ' m³' + (g.balance > 0.0005 ? ' (sobra material)' : (g.balance < -0.0005 ? ' (falta material)' : ''))],
         ['Cota de diseño que compensa', fx(g.zBalance, 3) + ' m']
       ];
       const heads = ['Norte \\ Este'];
       for(let i=0;i<cols;i++) heads.push(fx(x0 + i*dx, 2));
-      const depthRows = z.map((row, j) => [{v:fx(y0 + j*dy, 2), cls:'lbl'}].concat(
-        row.map(v => { const h = v - zd; return { v:(h > 0 ? '+' : '') + fx(h, 3), cls: h < 0 ? 'fill-c' : '' }; })));
+      const depthRows = z.map((row, j) => [{ v:fx(y0 + j*dy, 2), cls:'lbl' }].concat(
+        row.map(v => { const h = v - zd; return { v:(h > 0 ? '+' : '') + fx(h, 3), cls: h < -1e-9 ? 'fill-c' : (h > 1e-9 ? 'cut-c' : '') }; })));
       const zp = topoGridZeroPoints(z, x0, y0, dx, dy, zd);
-      const zpRows = zp.map((p, k) => [k+1, fx(p.x, 3), fx(p.y, 3), {v:p.where, cls:'lbl'}]);
-      out.innerHTML = resRows(sum) +
-        '<div class="res-title">Cotas de trabajo (+ corte / − relleno), en m</div>' + topoTable(heads, depthRows) +
-        '<div class="res-title">Puntos de paso (línea de ceros): ' + zp.length + '</div>' +
-        (zp.length ? topoTable(['#', 'Este', 'Norte', 'Ubicación'], zpRows) : '<div class="stat-note" style="padding:0;">El terreno no cruza la cota de diseño en la cuadrícula.</div>');
+      out.innerHTML = '<div class="res-title" style="margin-top:0;">Resultado</div>' + resRows(sum) +
+        '<div class="res-title">Cota de trabajo en cada punto (m)</div><div class="stat-note" style="padding:0;">Terreno − diseño. Positiva = corte, negativa = relleno.</div>' + topoTable(heads, depthRows) +
+        '<div class="res-title">Puntos de cruce con la cota de diseño: ' + zp.length + '</div>' +
+        (zp.length ? topoTable(['#', 'Norte', 'Este', 'Ubicación'], zp.map((p, k) => [k+1, fx(p.y, 3), fx(p.x, 3), { v:p.where, cls:'lbl' }]))
+                   : '<div class="stat-note" style="padding:0;">El terreno no cruza la cota de diseño en esta cuadrícula.</div>');
     } catch(e){ topoErr(out, e); }
   });
 
-  document.getElementById('btnTopoCotas').addEventListener('click', () => {
-    const out = document.getElementById('topoCotasResult');
-    try {
-      const order = document.getElementById('topoCotasOrder').value;
-      const zd = numOrNull('topoCotasZd');
-      if(zd == null) throw new Error('Ingresa la cota de diseño.');
-      const rows = topoParsePoints(document.getElementById('topoCotasInput').value, 3);
-      if(rows.length < 2) throw new Error('Ingresa al menos 2 puntos con 3 valores (coordenadas y cota).');
-      const closed = !!document.getElementById('topoCotasClosed').checked;
-      if(closed && rows.length < 3) throw new Error('Un polígono necesita al menos 3 puntos.');
-      const pts = rows.map(r => order === 'EN' ? [r[0], r[1], r[2]] : [r[1], r[0], r[2]]); // [E, N, Z]
-      const ptRows = pts.map((p, i) => {
-        const h = p[2] - zd;
-        const tipo = Math.abs(h) < 1e-9 ? 'EN COTA' : (h > 0 ? 'CORTE' : 'RELLENO');
-        return [i+1, fx(p[0], 3), fx(p[1], 3), fx(p[2], 3), { v:(h > 0 ? '+' : '') + fx(h, 3), cls: h < 0 ? 'fill-c' : '' }, { v:tipo, cls: h < 0 ? 'fill-c' : '' }];
-      });
-      let html = '<div class="res-title" style="margin-top:0;">Cotas de trabajo (cota terreno − cota diseño = ' + fx(zd, 3) + ')</div>' +
-        topoTable(['#', 'Este', 'Norte', 'Cota terreno', 'Cota trabajo', 'Tipo'], ptRows);
-      const zp = topoZeroPointsPath(pts, zd, closed);
-      html += '<div class="res-title">Puntos de corte con la cota de diseño: ' + zp.length + '</div>';
-      html += zp.length
-        ? topoTable(['Entre', 'Este', 'Norte', 'Cota', 'Dist. desde el 1.er punto del tramo'], zp.map(p => [{v:p.from + '–' + p.to, cls:'lbl'}, fx(p.e, 3), fx(p.n, 3), fx(zd, 3), fx(p.dist, 3)]))
-        : '<div class="stat-note" style="padding:0;">Todos los puntos quedan del mismo lado de la cota de diseño.</div>';
-      if(closed){
-        try {
-          const v = topoPolyVolume(pts, zd);
-          html += '<div class="res-title">Volumen aproximado (prismas triangulares)</div>' + resRows([
-            ['Triángulos', v.tris],
-            ['Área del polígono', fx(v.area, 3) + ' m²'],
-            ['Volumen de CORTE', fx(v.cut, 3) + ' m³'],
-            ['Volumen de RELLENO', fx(v.fill, 3) + ' m³'],
-            ['Balance (corte − relleno)', fx(v.balance, 3) + ' m³'],
-            ['Área en corte', fx(v.aCut, 3) + ' m²'],
-            ['Área en relleno', fx(v.aFill, 3) + ' m²']
-          ]) + '<div class="stat-note" style="padding:0; margin-top:6px;">Aproxima el terreno con triángulos entre los vértices dados; entre más puntos, mejor la aproximación. Para mayor precisión usa la pestaña de cuadrícula.</div>';
-        } catch(e){ html += '<span class="chem-error">' + escHtml(e.message) + '</span>'; }
-      }
-      out.innerHTML = html;
-    } catch(e){ topoErr(out, e); }
+  /* ===================== FÍSICA: MOVIMIENTO CIRCULAR UNIFORME ===================== */
+  const MCU_FIELDS = [
+    ['r','mcuR','Radio (r)','m'], ['T','mcuT','Período (T)','s'], ['f','mcuF','Frecuencia (f)','Hz'], ['rpm','mcuRpm','Revoluciones por minuto','rpm'],
+    ['w','mcuW','Velocidad angular (ω)','rad/s'], ['v','mcuV','Velocidad tangencial (v)','m/s'], ['a','mcuA','Aceleración centrípeta (aₙ)','m/s²'],
+    ['t','mcuTime','Tiempo (t)','s'], ['th','mcuTh','Ángulo recorrido θ (radianes)','rad'], ['thd','mcuThd','Ángulo recorrido θ (grados)','°'],
+    ['n','mcuN','Número de vueltas (n)','vueltas'], ['s','mcuS','Arco recorrido (s)','m'], ['m','mcuM','Masa (m)','kg'], ['F','mcuFc','Fuerza centrípeta (F)','N']
+  ];
+  document.getElementById('btnMcuClear').addEventListener('click', () => {
+    MCU_FIELDS.forEach(f => { document.getElementById(f[1]).value = ''; });
+    document.getElementById('mcuResult').innerHTML = '';
   });
+  document.getElementById('btnMcu').addEventListener('click', () => {
+    const out = document.getElementById('mcuResult');
+    try {
+      const vals = {}; let given = 0;
+      MCU_FIELDS.forEach(f => { const v = numOrNull(f[1]); vals[f[0]] = v; if(v != null) given++; });
+      if(given < 2) throw new Error('Llena al menos 2 datos. Normalmente basta el radio y un dato de la rotación (T, f, rpm, ω, v o aₙ).');
+      const r = mcuSolve(vals);
+      if(!Object.keys(r.derived).length) throw new Error('Con esos datos no se puede calcular nada más. Prueba agregando el radio (r) y un dato de la rotación (T, f, rpm, ω, v o aₙ).');
+      const rows = MCU_FIELDS.filter(f => r.values[f[0]] != null).map(f =>
+        [f[2] + (r.derived[f[0]] ? '' : ' <span style="color:var(--text-dim)">(dato)</span>'), sig(r.values[f[0]]) + ' ' + f[3]]);
+      let html = resRows(rows);
+      if(r.inconsistent.length) html = '<div class="chem-error" style="margin-bottom:8px;">⚠ Los datos no son consistentes entre sí (no cumplen: ' + r.inconsistent.map(escHtml).join(', ') + '). Revisa lo que escribiste.</div>' + html;
+      html += '<div class="stat-note" style="padding:0; margin-top:8px;">ω = 2πf = 2π/T · v = ω·r · aₙ = v²/r = ω²·r · θ = ω·t · s = θ·r · F = m·aₙ</div>';
+      out.innerHTML = html;
+    } catch(e){ chemErr(out, e); }
+  });
+
 
   // initial paint once layout is ready
   window.addEventListener('load', () => {
