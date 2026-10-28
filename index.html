@@ -303,6 +303,13 @@
   .check-row input{ margin-top:3px; }
   .res-title{ margin-top:12px; font-weight:700; color:var(--text); font-family:var(--sans); }
 
+  .formula-box{
+    margin:0 0 10px; padding:9px 11px; border-radius:8px; background:rgba(126,231,135,0.07);
+    border:1px solid rgba(126,231,135,0.18); font-family:var(--mono); font-size:11.5px; color:var(--text);
+    line-height:1.65; white-space:pre-wrap; word-break:break-word;
+  }
+  optgroup{ font-family:var(--sans); }
+
   /* ---- Math tools panel ---- */
   .tri-grid{
     display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:4px;
@@ -417,6 +424,7 @@
     <div class="subtabs">
       <button class="subtab active" data-statsubtab="descriptive">Descriptiva</button>
       <button class="subtab" data-statsubtab="distributions">Distribuciones</button>
+      <button class="subtab" data-statsubtab="inference">Inferencia</button>
     </div>
 
     <div class="subpanel active" id="statsubpanel-descriptive">
@@ -475,6 +483,40 @@
 
       <button class="action-btn" id="btnCalcDist">Calcular</button>
       <div class="chem-result" id="distResult"></div>
+    </div>
+  
+    <div class="subpanel" id="statsubpanel-inference">
+      <span class="field-label">¿Qué quieres calcular?</span>
+      <select class="field" id="infMode">
+        <optgroup label="Intervalos de confianza">
+          <option value="ci_z">Media, σ conocida (Z)</option>
+          <option value="ci_t">Media, σ desconocida (t)</option>
+          <option value="ci_p">Proporción</option>
+        </optgroup>
+        <optgroup label="Tamaño de muestra">
+          <option value="n_mean">Para estimar una media</option>
+          <option value="n_prop">Para estimar una proporción</option>
+        </optgroup>
+        <optgroup label="Z, t y probabilidad acumulada">
+          <option value="z_val">Valor Z y probabilidades</option>
+          <option value="z_inv">Z crítico (desde p, confianza o α)</option>
+          <option value="t_val">Valor t, gl y probabilidades</option>
+          <option value="t_inv">t crítico (desde gl y p, confianza o α)</option>
+        </optgroup>
+        <optgroup label="Pruebas de hipótesis (nivel de significancia α)">
+          <option value="test_z">Media, σ conocida (Z)</option>
+          <option value="test_t">Media, σ desconocida (t)</option>
+          <option value="test_p">Proporción (Z)</option>
+        </optgroup>
+        <optgroup label="Grados de libertad">
+          <option value="df">Una o dos muestras</option>
+        </optgroup>
+      </select>
+      <p class="stats-intro" id="infHelp" style="margin-top:10px;"></p>
+      <button class="add-btn" id="btnInfList" style="width:100%; margin-bottom:8px; padding:10px;">Usar los datos de la pestaña Descriptiva (n, x̄, s)</button>
+      <div id="infFields"></div>
+      <button class="action-btn" id="btnInf">Calcular</button>
+      <div class="chem-result" id="infResult"></div>
     </div>
   </section>
 
@@ -815,6 +857,7 @@
       <button class="subtab" data-physubtab="vertical">Vertical</button>
       <button class="subtab" data-physubtab="parabolico">Parabólico</button>
       <button class="subtab" data-physubtab="mcu">Circular (MCU)</button>
+      <button class="subtab" data-physubtab="fric">Rozamiento</button>
     </div>
 
     <!-- MRU -->
@@ -936,6 +979,21 @@
       <button class="action-btn" id="btnMcu">Calcular</button>
       <button class="add-btn" id="btnMcuClear" style="width:100%; margin-top:8px; padding:10px;">Limpiar</button>
       <div class="chem-result" id="mcuResult"></div>
+    </div>
+  
+    <div class="subpanel" id="physubpanel-fric">
+      <span class="field-label">Tipo de problema</span>
+      <select class="field" id="fricMode">
+        <option value="basic">Fuerza de rozamiento: Fr = μ·N</option>
+        <option value="horiz">Bloque en plano horizontal con fuerza aplicada</option>
+        <option value="incline">Plano inclinado</option>
+        <option value="brake">Frenado: deslizar hasta detenerse</option>
+        <option value="pulley">Bloque sobre mesa con masa colgante (polea)</option>
+      </select>
+      <p class="stats-intro" id="fricHelp" style="margin-top:10px;"></p>
+      <div id="fricFields"></div>
+      <button class="action-btn" id="btnFric">Calcular</button>
+      <div class="chem-result" id="fricResult"></div>
     </div>
   </section>
 
@@ -1483,14 +1541,7 @@
     let s=0; for(let k=0;k<=Math.floor(x);k++) s += poissonPMF(lambda,k);
     return s;
   }
-  function erf(x){
-    const sign = x<0 ? -1:1; x=Math.abs(x);
-    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
-    const t=1/(1+p*x);
-    const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
-    return sign*y;
-  }
-  function normalCDF(x,mu,sigma){ return 0.5*(1+erf((x-mu)/(sigma*Math.sqrt(2)))); }
+  function normalCDF(x,mu,sigma){ return normLower((x-mu)/sigma); }
   function normalPDF(x,mu,sigma){ return (1/(sigma*Math.sqrt(2*Math.PI)))*Math.exp(-((x-mu)**2)/(2*sigma*sigma)); }
   function exponentialPDF(lambda,x){ return x<0?0:lambda*Math.exp(-lambda*x); }
   function exponentialCDF(lambda,x){ return x<0?0:1-Math.exp(-lambda*x); }
@@ -3893,6 +3944,522 @@ function equilCompute(sp, K){
       html += '<div class="stat-note" style="padding:0; margin-top:8px;">ω = 2πf = 2π/T · v = ω·r · aₙ = v²/r = ω²·r · θ = ω·t · s = θ·r · F = m·aₙ</div>';
       out.innerHTML = html;
     } catch(e){ chemErr(out, e); }
+  });
+
+
+/* ===== INFERENCIA ESTADÍSTICA: núcleo ===== */
+function normPdf(z){ return Math.exp(-0.5*z*z)/Math.sqrt(2*Math.PI); }
+function normLower(z){
+  if(z === Infinity) return 1;
+  if(z === -Infinity) return 0;
+  const a = Math.abs(z); let q;
+  if(a < 3){
+    let term = a, sum = a;
+    for(let k=1;k<300;k++){ term *= a*a/(2*k+1); sum += term; if(term < 1e-18*sum) break; }
+    q = 0.5 - normPdf(a)*sum;
+  } else {
+    let f = a;
+    for(let k=120;k>=1;k--) f = a + k/f;
+    q = normPdf(a)/f;
+  }
+  return z >= 0 ? 1-q : q;
+}
+function normUpper(z){ return normLower(-z); }
+function normInv(p){
+  if(p <= 0) return -Infinity;
+  if(p >= 1) return Infinity;
+  if(p === 0.5) return 0;
+  const q = p < 0.5 ? p : 1-p, t = Math.sqrt(-2*Math.log(q));
+  let x = t - (2.515517+0.802853*t+0.010328*t*t)/(1+1.432788*t+0.189269*t*t+0.001308*t*t*t);
+  for(let i=0;i<10;i++){ x += (normUpper(x) - q)/normPdf(x); }
+  return p < 0.5 ? -x : x;
+}
+function betacf(a,b,x){
+  const MAXIT = 400, EPS = 3e-16, FPMIN = 1e-300;
+  const qab = a+b, qap = a+1, qam = a-1;
+  let c = 1, d = 1 - qab*x/qap;
+  if(Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1/d; let h = d;
+  for(let m=1;m<=MAXIT;m++){
+    const m2 = 2*m;
+    let aa = m*(b-m)*x/((qam+m2)*(a+m2));
+    d = 1+aa*d; if(Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1+aa/c; if(Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1/d; h *= d*c;
+    aa = -(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d = 1+aa*d; if(Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1+aa/c; if(Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1/d; const del = d*c; h *= del;
+    if(Math.abs(del-1) < EPS) break;
+  }
+  return h;
+}
+function incBeta(x,a,b){
+  if(x <= 0) return 0;
+  if(x >= 1) return 1;
+  const bt = Math.exp(lgamma(a+b) - lgamma(a) - lgamma(b) + a*Math.log(x) + b*Math.log(1-x));
+  if(x < (a+1)/(a+b+2)) return bt*betacf(a,b,x)/a;
+  return 1 - bt*betacf(b,a,1-x)/b;
+}
+function tUpper(t, df){
+  const half = incBeta(df/(df+t*t), df/2, 0.5)/2;
+  return t >= 0 ? half : 1-half;
+}
+function tLower(t, df){ return tUpper(-t, df); }
+function tInv(p, df){
+  if(p <= 0) return -Infinity;
+  if(p >= 1) return Infinity;
+  if(p === 0.5) return 0;
+  const sign = p < 0.5 ? -1 : 1, q = p < 0.5 ? p : 1-p;
+  let lo = 0, hi = Math.max(1, normInv(1-q));
+  while(tUpper(hi, df) > q) hi *= 2;
+  for(let i=0;i<300;i++){
+    const mid = (lo+hi)/2;
+    if(tUpper(mid, df) > q) lo = mid; else hi = mid;
+    if(hi-lo < 1e-14*Math.max(1,hi)) break;
+  }
+  return sign*(lo+hi)/2;
+}
+function levelProb(v){ return v > 1 ? v/100 : v; }
+function ciMeanZ(xbar, sigma, n, conf){
+  const z = normInv(1-(1-conf)/2), se = sigma/Math.sqrt(n), E = z*se;
+  return { z, se, E, lo:xbar-E, hi:xbar+E };
+}
+function ciMeanT(xbar, s, n, conf){
+  const df = n-1, t = tInv(1-(1-conf)/2, df), se = s/Math.sqrt(n), E = t*se;
+  return { t, df, se, E, lo:xbar-E, hi:xbar+E };
+}
+function ciProp(x, n, conf){
+  const p = x/n, z = normInv(1-(1-conf)/2), se = Math.sqrt(p*(1-p)/n), E = z*se;
+  const z2 = z*z, den = 1+z2/n, center = (p+z2/(2*n))/den, half = z/den*Math.sqrt(p*(1-p)/n + z2/(4*n*n));
+  return { p, z, se, E, lo:p-E, hi:p+E, wLo:center-half, wHi:center+half };
+}
+function sampleSizeMean(sigma, E, conf){
+  const z = normInv(1-(1-conf)/2), n = Math.pow(z*sigma/E, 2);
+  return { z, n, nCeil: Math.ceil(n - 1e-9) };
+}
+function sampleSizeProp(p, E, conf){
+  const z = normInv(1-(1-conf)/2), n = z*z*p*(1-p)/(E*E);
+  return { z, n, nCeil: Math.ceil(n - 1e-9) };
+}
+function pvalZ(z, tail){ return tail === 'two' ? Math.min(1, 2*normUpper(Math.abs(z))) : (tail === 'right' ? normUpper(z) : normLower(z)); }
+function critZ(alpha, tail){ return tail === 'two' ? normInv(1-alpha/2) : (tail === 'right' ? normInv(1-alpha) : -normInv(1-alpha)); }
+function pvalT(t, df, tail){ return tail === 'two' ? Math.min(1, 2*tUpper(Math.abs(t), df)) : (tail === 'right' ? tUpper(t, df) : tLower(t, df)); }
+function critT(alpha, df, tail){ return tail === 'two' ? tInv(1-alpha/2, df) : (tail === 'right' ? tInv(1-alpha, df) : -tInv(1-alpha, df)); }
+function welchDf(s1, n1, s2, n2){
+  const a = s1*s1/n1, b = s2*s2/n2;
+  return (a+b)*(a+b)/(a*a/(n1-1) + b*b/(n2-1));
+}
+
+/* ===== ROZAMIENTO: núcleo ===== */
+function fricHoriz(o){
+  let { m, F, phi, dir, mus, muk, g } = o;
+  if(m == null || m <= 0) throw new Error('Ingresa la masa (mayor que 0).');
+  if(mus == null && muk == null) throw new Error('Ingresa al menos un coeficiente de rozamiento (μs o μk).');
+  const notes = [];
+  if(mus == null){ mus = muk; notes.push('No diste μs: se usó μs = μk.'); }
+  if(muk == null){ muk = mus; notes.push('No diste μk: se usó μk = μs.'); }
+  if(mus < 0 || muk < 0) throw new Error('Los coeficientes de rozamiento deben ser ≥ 0.');
+  if(muk > mus) notes.push('Normalmente μk ≤ μs; revisa los coeficientes.');
+  F = F || 0; phi = phi || 0;
+  if(F < 0) throw new Error('F debe ser ≥ 0 (indica el sentido con «Jalar» o «Empujar»).');
+  const rad = phi*Math.PI/180, s = Math.sin(rad), c = Math.cos(rad), W = m*g;
+  const Fx = F*c, Fy = F*s*(dir === 'push' ? -1 : 1);
+  let N = W - Fy, lifted = false;   // Fy > 0 = hacia arriba (jalar): alivia la normal
+  if(N <= 0){ N = 0; lifted = true; notes.push('La componente vertical de F levanta el bloque: N = 0 y no hay rozamiento.'); }
+  const fsmax = mus*N, moving = Fx > fsmax + 1e-12;
+  const fr = moving ? muk*N : Fx, a = moving ? (Fx - muk*N)/m : 0;
+  const den = dir === 'push' ? c - mus*s : c + mus*s;
+  const Fmin = den > 1e-12 ? mus*W/den : Infinity;
+  const out = { W, Fx, Fy, N, fsmax, moving, fr, a, Fmin, lifted, notes, mus, muk };
+  if(dir !== 'push'){ out.optAngle = Math.atan(mus)*180/Math.PI; out.FminOpt = mus*W/Math.sqrt(1+mus*mus); }
+  return out;
+}
+function fricIncline(o){
+  let { m, theta, mus, muk, F, g, d } = o;
+  if(m == null || m <= 0) throw new Error('Ingresa la masa (mayor que 0).');
+  if(theta == null || theta <= 0 || theta >= 90) throw new Error('El ángulo del plano debe estar entre 0° y 90°.');
+  if(mus == null && muk == null) throw new Error('Ingresa al menos un coeficiente de rozamiento (μs o μk).');
+  const notes = [];
+  if(mus == null){ mus = muk; notes.push('No diste μs: se usó μs = μk.'); }
+  if(muk == null){ muk = mus; notes.push('No diste μk: se usó μk = μs.'); }
+  if(muk > mus) notes.push('Normalmente μk ≤ μs; revisa los coeficientes.');
+  F = F || 0;
+  const th = theta*Math.PI/180, W = m*g, N = W*Math.cos(th), Wp = W*Math.sin(th);
+  const fsmax = mus*N, D = Wp - F;
+  let state, fr, a = 0, dirMove = null;
+  if(Math.abs(D) <= fsmax + 1e-12){
+    state = 'rest'; fr = Math.abs(D);
+  } else {
+    dirMove = D > 0 ? 'down' : 'up'; state = 'moving';
+    fr = muk*N; a = (Math.abs(D) - fr)/m;
+    if(a < 0){ a = 0; notes.push('Con esos coeficientes la fricción cinética supera a la fuerza neta: el bloque se detendría.'); }
+  }
+  const out = { W, N, Wp, fsmax, D, state, dirMove, fr, a, notes, mus, muk,
+    critAngle: Math.atan(mus)*180/Math.PI, FstartUp: Wp + fsmax, Fhold: Math.max(0, Wp - fsmax), FconstUp: Wp + muk*N, frictionDir: D > 0 ? 'up' : 'down' };
+  if(d != null && state === 'moving' && a > 0){ out.t = Math.sqrt(2*d/a); out.v = Math.sqrt(2*a*d); }
+  return out;
+}
+function fricBrake(o){
+  const { v0, muk, d, t, g } = o;
+  if(v0 == null || v0 <= 0) throw new Error('Ingresa la velocidad inicial (mayor que 0).');
+  const given = [muk, d, t].filter(x => x != null).length;
+  if(given !== 1) throw new Error('Llena solo uno de estos: μk, distancia o tiempo de frenado.');
+  let mu = muk, dist = d, time = t;
+  if(muk != null){ if(muk <= 0) throw new Error('μk debe ser mayor que 0.'); dist = v0*v0/(2*muk*g); time = v0/(muk*g); }
+  else if(d != null){ if(d <= 0) throw new Error('La distancia debe ser mayor que 0.'); mu = v0*v0/(2*g*d); time = 2*d/v0; }
+  else { if(t <= 0) throw new Error('El tiempo debe ser mayor que 0.'); mu = v0/(g*t); dist = v0*t/2; }
+  return { mu, d: dist, t: time, a: mu*g, kmh: v0*3.6 };
+}
+function fricPulley(o){
+  let { m1, m2, mus, muk, g } = o;
+  if(m1 == null || m1 <= 0 || m2 == null || m2 <= 0) throw new Error('Ingresa las dos masas (mayores que 0).');
+  if(mus == null && muk == null) throw new Error('Ingresa al menos un coeficiente de rozamiento (μs o μk).');
+  const notes = [];
+  if(mus == null){ mus = muk; notes.push('No diste μs: se usó μs = μk.'); }
+  if(muk == null){ muk = mus; notes.push('No diste μk: se usó μk = μs.'); }
+  const drive = m2*g, fsmax = mus*m1*g;
+  if(drive <= fsmax + 1e-12) return { moving:false, drive, fsmax, a:0, T:drive, fr:drive, m2min: mus*m1, notes, mus, muk };
+  const fk = muk*m1*g, a = (drive - fk)/(m1+m2);
+  return { moving:true, drive, fsmax, a, T: m2*(g-a), fr:fk, m2min: mus*m1, notes, mus, muk };
+}
+
+  /* ===================== FORMULARIOS DINÁMICOS (rozamiento e inferencia) ===================== */
+  function dynFieldsHtml(prefix, fields){
+    return '<div class="tri-grid" style="grid-template-columns:1fr 1fr;">' + fields.map(f => {
+      const id = prefix + f[0];
+      const ctl = f[3]
+        ? '<select class="field" id="' + id + '">' + f[3].map(o => '<option value="' + o[0] + '">' + escHtml(o[1]) + '</option>').join('') + '</select>'
+        : '<input class="field" id="' + id + '" type="number" step="any" inputmode="decimal" value="' + escHtml(f[2] || '') + '">';
+      return '<div><span class="field-label">' + escHtml(f[1]) + '</span>' + ctl + '</div>';
+    }).join('') + '</div>';
+  }
+  function formulaBox(lines){ return '<div class="formula-box">' + lines.map(escHtml).join('\n') + '</div>'; }
+  function renderCalc(r){
+    return (r.formula ? formulaBox(r.formula) : '') + resRows(r.rows) +
+      (r.notes || []).map(n => '<div class="stat-note" style="padding:0; margin-top:6px;">' + escHtml(n) + '</div>').join('');
+  }
+  const needNum = (V, k, label) => { const v = V(k); if(v == null) throw new Error('Falta: ' + label + '.'); return v; };
+  const must = (cond, msg) => { if(!cond) throw new Error(msg); };
+
+  /* ===================== FÍSICA: FUERZA DE ROZAMIENTO ===================== */
+  const FRIC_MODES = {
+    basic: {
+      help: 'Fr = μ·N. Llena dos de los tres valores (Fr, μ, N). Si no conoces N pero sí la masa, escríbela: sobre una superficie horizontal N = m·g.',
+      fields: [['Fr','Fuerza de rozamiento Fr (N)',''],['mu','Coeficiente de rozamiento μ',''],['N','Fuerza normal N (N)',''],['m','Masa m (kg), opcional',''],['g','g (m/s²)','9.8']],
+      run(V){
+        let Fr = V('Fr'), mu = V('mu'), N = V('N'); const m = V('m'), g = V('g') || 9.8;
+        if(N == null && m != null) N = m*g;
+        must([Fr, mu, N].filter(x => x != null).length === 2, 'Llena exactamente dos de los tres valores: Fr, μ y N (o la masa en lugar de N).');
+        if(N != null) must(N >= 0, 'La fuerza normal no puede ser negativa.');
+        if(Fr != null) must(Fr >= 0, 'La fuerza de rozamiento no puede ser negativa.');
+        if(Fr == null) Fr = mu*N;
+        else if(mu == null){ must(N > 0, 'N debe ser mayor que 0 para hallar μ.'); mu = Fr/N; }
+        else { must(mu > 0, 'μ debe ser mayor que 0 para hallar N.'); N = Fr/mu; }
+        return { formula: ['Fr = μ · N', 'Fr = ' + sig(mu) + ' · ' + sig(N) + ' = ' + sig(Fr) + ' N'],
+          rows: [['Fuerza de rozamiento Fr', sig(Fr) + ' N'], ['Coeficiente μ', sig(mu)], ['Fuerza normal N', sig(N) + ' N'], ['Masa equivalente m = N/g (superficie horizontal)', sig(N/g) + ' kg']] };
+      }
+    },
+    horiz: {
+      help: 'Bloque sobre una superficie horizontal con una fuerza F aplicada (puede formar un ángulo φ con la horizontal). Se decide si se mueve comparando F·cos φ con el rozamiento estático máximo μs·N.',
+      fields: [['m','Masa m (kg)',''],['F','Fuerza aplicada F (N)',''],['phi','Ángulo φ de F (°), 0 = horizontal','0'],['dir','Sentido vertical de F',null,[['pull','Jalar (hacia arriba)'],['push','Empujar (hacia abajo)']]],['mus','μs (estático)',''],['muk','μk (cinético)',''],['g','g (m/s²)','9.8']],
+      run(V, S){
+        const dir = S('dir') || 'pull';
+        const r = fricHoriz({ m:V('m'), F:V('F'), phi:V('phi'), dir, mus:V('mus'), muk:V('muk'), g:V('g') || 9.8 });
+        const m = V('m'), F = V('F') || 0, phi = V('phi') || 0;
+        const rows = [
+          ['Peso W = m·g', sig(r.W) + ' N'],
+          ['Componente horizontal Fx = F·cos φ', sig(r.Fx) + ' N'],
+          ['Componente vertical de F', sig(Math.abs(r.Fy)) + ' N (' + (r.Fy >= 0 ? 'hacia arriba' : 'hacia abajo') + ')'],
+          ['Fuerza normal N', sig(r.N) + ' N'],
+          ['Rozamiento estático máximo μs·N', sig(r.fsmax) + ' N'],
+          ['Estado', r.moving ? '<b>En movimiento</b> (Fx > μs·N)' : '<b>En reposo</b> (Fx ≤ μs·N)'],
+          [r.moving ? 'Fuerza de rozamiento cinética μk·N' : 'Fuerza de rozamiento estática (= Fx)', sig(r.fr) + ' N'],
+          ['Fuerza neta Fx − Fr', sig(r.Fx - r.fr) + ' N'],
+          ['Aceleración a', sig(r.a) + ' m/s²']
+        ];
+        rows.push(['Fuerza mínima para iniciar el movimiento con φ = ' + sig(phi) + '°', isFinite(r.Fmin) ? sig(r.Fmin) + ' N' : 'no se mueve con ningún valor de F (se atasca)']);
+        if(r.optAngle != null) rows.push(['Si jalas: ángulo óptimo (tan φ = μs) y F mínima', sig(r.optAngle) + '° → ' + sig(r.FminOpt) + ' N']);
+        const sgn = dir === 'push' ? '+' : '−';
+        return { formula: [
+          'N = m·g ' + sgn + ' F·sen φ = ' + sig(m) + '·' + sig(V('g') || 9.8) + ' ' + sgn + ' ' + sig(F) + '·sen(' + sig(phi) + '°) = ' + sig(r.N) + ' N',
+          'Fr,máx = μs·N = ' + sig(r.mus) + ' · ' + sig(r.N) + ' = ' + sig(r.fsmax) + ' N',
+          'a = (F·cos φ − μk·N) / m = (' + sig(r.Fx) + ' − ' + sig(r.muk*r.N) + ') / ' + sig(m) + ' = ' + sig(r.a) + ' m/s²'
+        ], rows, notes: r.notes };
+      }
+    },
+    incline: {
+      help: 'Bloque sobre un plano inclinado un ángulo θ. Opcionalmente una fuerza F paralela al plano (positiva hacia arriba del plano, negativa si empuja hacia abajo). Si das la distancia d, calcula el tiempo y la velocidad al recorrerla partiendo del reposo.',
+      fields: [['m','Masa m (kg)',''],['theta','Ángulo del plano θ (°)',''],['mus','μs (estático)',''],['muk','μk (cinético)',''],['F','Fuerza F paralela al plano (N), opcional','0'],['d','Distancia a recorrer d (m), opcional',''],['g','g (m/s²)','9.8']],
+      run(V){
+        const r = fricIncline({ m:V('m'), theta:V('theta'), mus:V('mus'), muk:V('muk'), F:V('F'), g:V('g') || 9.8, d:V('d') });
+        const rows = [
+          ['Peso W = m·g', sig(r.W) + ' N'],
+          ['Componente paralela W∥ = m·g·sen θ', sig(r.Wp) + ' N'],
+          ['Fuerza normal N = m·g·cos θ', sig(r.N) + ' N'],
+          ['Rozamiento estático máximo μs·N', sig(r.fsmax) + ' N'],
+          ['Fuerza neta que tiende a moverlo (W∥ − F)', sig(r.D) + ' N (' + (r.D >= 0 ? 'hacia abajo' : 'hacia arriba') + ')']
+        ];
+        if(r.state === 'rest'){
+          rows.push(['Estado', '<b>En reposo</b>']);
+          rows.push(['Fuerza de rozamiento estática', sig(r.fr) + ' N (' + (r.frictionDir === 'up' ? 'hacia arriba del plano' : 'hacia abajo del plano') + ')']);
+        } else {
+          rows.push(['Estado', '<b>Se desliza hacia ' + (r.dirMove === 'down' ? 'abajo' : 'arriba') + '</b>']);
+          rows.push(['Fuerza de rozamiento cinética μk·N', sig(r.fr) + ' N']);
+          rows.push(['Aceleración a', sig(r.a) + ' m/s²']);
+          if(r.t != null){ rows.push(['Tiempo en recorrer d', sig(r.t) + ' s']); rows.push(['Velocidad al final de d', sig(r.v) + ' m/s']); }
+        }
+        rows.push(['Ángulo crítico de deslizamiento (tan θ = μs)', sig(r.critAngle) + '°']);
+        rows.push(['F (hacia arriba) mínima para empezar a subirlo', sig(r.FstartUp) + ' N']);
+        rows.push(['F (hacia arriba) para subirlo a velocidad constante', sig(r.FconstUp) + ' N']);
+        rows.push(['F (hacia arriba) mínima para que no se deslice hacia abajo', sig(r.Fhold) + ' N']);
+        return { formula: ['N = m·g·cos θ', 'Fr,máx = μs·N = ' + sig(r.mus) + ' · ' + sig(r.N) + ' = ' + sig(r.fsmax) + ' N', 'Sin F y deslizando: a = g·(sen θ − μk·cos θ)'], rows, notes: r.notes };
+      }
+    },
+    brake: {
+      help: 'Un cuerpo con velocidad inicial v₀ se desliza hasta detenerse solo por el rozamiento cinético (a = μk·g). Llena v₀ y UNO de estos: μk, distancia o tiempo.',
+      fields: [['v0','Velocidad inicial v₀ (m/s)',''],['muk','Coeficiente μk',''],['d','Distancia de frenado d (m)',''],['t','Tiempo de frenado t (s)',''],['g','g (m/s²)','9.8']],
+      run(V){
+        const g = V('g') || 9.8, v0 = V('v0');
+        const r = fricBrake({ v0, muk:V('muk'), d:V('d'), t:V('t'), g });
+        return { formula: ['a = μk·g = ' + sig(r.mu) + ' · ' + sig(g) + ' = ' + sig(r.a) + ' m/s²', 'd = v₀² / (2·μk·g) = ' + sig(v0*v0) + ' / (2 · ' + sig(r.mu) + ' · ' + sig(g) + ') = ' + sig(r.d) + ' m', 't = v₀ / (μk·g) = ' + sig(r.t) + ' s'],
+          rows: [['Velocidad inicial', sig(v0) + ' m/s (' + sig(r.kmh) + ' km/h)'], ['Coeficiente μk', sig(r.mu)], ['Desaceleración', sig(r.a) + ' m/s²'], ['Distancia hasta detenerse', sig(r.d) + ' m'], ['Tiempo hasta detenerse', sig(r.t) + ' s']] };
+      }
+    },
+    pulley: {
+      help: 'Bloque m₁ sobre una mesa horizontal con rozamiento, unido por una cuerda y una polea ideal a un bloque m₂ que cuelga. Calcula si se mueve, la aceleración y la tensión.',
+      fields: [['m1','Masa m₁ sobre la mesa (kg)',''],['m2','Masa m₂ colgante (kg)',''],['mus','μs (estático)',''],['muk','μk (cinético)',''],['g','g (m/s²)','9.8']],
+      run(V){
+        const g = V('g') || 9.8, r = fricPulley({ m1:V('m1'), m2:V('m2'), mus:V('mus'), muk:V('muk'), g });
+        const m1 = V('m1'), m2 = V('m2');
+        const rows = [['Fuerza que jala m₂·g', sig(r.drive) + ' N'], ['Rozamiento estático máximo μs·m₁·g', sig(r.fsmax) + ' N'],
+          ['Estado', r.moving ? '<b>En movimiento</b>' : '<b>En reposo</b> (m₂·g ≤ μs·m₁·g)'],
+          [r.moving ? 'Rozamiento cinético μk·m₁·g' : 'Rozamiento estático (= m₂·g)', sig(r.fr) + ' N'],
+          ['Aceleración a', sig(r.a) + ' m/s²'], ['Tensión de la cuerda T', sig(r.T) + ' N'], ['Masa m₂ mínima para que empiece a moverse (μs·m₁)', sig(r.m2min) + ' kg']];
+        return { formula: ['a = (m₂·g − μk·m₁·g) / (m₁ + m₂) = (' + sig(m2*g) + ' − ' + sig(r.muk*m1*g) + ') / ' + sig(m1+m2) + ' = ' + sig(r.a) + ' m/s²', 'T = m₂·(g − a) = ' + sig(m2) + ' · (' + sig(g) + ' − ' + sig(r.a) + ') = ' + sig(r.T) + ' N'], rows, notes: r.notes };
+      }
+    }
+  };
+  const fricMode = document.getElementById('fricMode');
+  const fricV = k => numOrNull('fric_' + k), fricS = k => document.getElementById('fric_' + k).value;
+  function fricRender(){
+    const m = FRIC_MODES[fricMode.value || 'basic'];
+    document.getElementById('fricHelp').textContent = m.help;
+    document.getElementById('fricFields').innerHTML = dynFieldsHtml('fric_', m.fields);
+    document.getElementById('fricResult').innerHTML = '';
+  }
+  fricMode.addEventListener('change', fricRender); fricRender();
+  document.getElementById('btnFric').addEventListener('click', () => {
+    const out = document.getElementById('fricResult');
+    try { out.innerHTML = renderCalc(FRIC_MODES[fricMode.value || 'basic'].run(fricV, fricS)); } catch(e){ chemErr(out, e); }
+  });
+
+  /* ===================== ESTADÍSTICA: INFERENCIA ===================== */
+  const lvl = levelProb;
+  const pctTxt = p => sig(p*100) + ' %';
+  const TAILS = [['two','Bilateral (≠)'],['right','Cola derecha (>)'],['left','Cola izquierda (<)']];
+  // h1 va directo en una celda de tabla (sin escapar) -> usa entidades HTML.
+  // zone va dentro de formulaBox(), que ya llama a escHtml() -> usa el carácter tal cual.
+  const tailInfo = {
+    two:   { h1: '≠',    zone: 'se rechaza H₀ si |estadístico| > valor crítico' },
+    right: { h1: '&gt;', zone: 'se rechaza H₀ si estadístico > valor crítico' },
+    left:  { h1: '&lt;', zone: 'se rechaza H₀ si estadístico < valor crítico' }
+  };
+  function hypRows(sym, stat, name, crit, p, alpha, tail, extra){
+    const reject = p <= alpha;
+    const critTxt = tail === 'two' ? '±' + sig(Math.abs(crit)) : sig(crit);
+    return [
+      ['Hipótesis', 'H₀: ' + sym + ' = ' + extra.null0 + '   |   H₁: ' + sym + ' ' + tailInfo[tail].h1 + ' ' + extra.null0],
+      [name, sig(stat)]
+    ].concat(extra.df != null ? [['Grados de libertad (gl)', sig(extra.df)]] : []).concat([
+      ['Nivel de significancia α', sig(alpha)],
+      ['Valor crítico', critTxt],
+      ['Valor p', sig(p)],
+      ['Decisión', reject ? '<b>Se rechaza H₀</b> (p ≤ α)' : '<b>No se rechaza H₀</b> (p > α)']
+    ]);
+  }
+  function hypConclusion(reject, alpha){
+    return reject ? 'Con α = ' + sig(alpha) + ' hay evidencia estadística suficiente para rechazar H₀.' : 'Con α = ' + sig(alpha) + ' no hay evidencia suficiente para rechazar H₀.';
+  }
+  const alphaOf = V => { const a = lvl(needNum(V, 'alpha', 'el nivel de significancia α')); must(a > 0 && a < 1, 'α debe estar entre 0 y 1 (por ejemplo 0.05 o 5 %).'); return a; };
+  const confOf = V => { const c = lvl(needNum(V, 'conf', 'el nivel de confianza')); must(c > 0 && c < 1, 'El nivel de confianza debe estar entre 0 y 100 % (por ejemplo 95).'); return c; };
+  const TAILF = ['tail','Tipo de prueba',null,TAILS];
+
+  const INF = {
+    ci_z: { group: 'ic', label: 'Intervalo de confianza para la media (σ conocida, Z)', list: true,
+      help: 'Se usa cuando se conoce la desviación estándar poblacional σ. Fórmula: x̄ ± z(α/2)·σ/√n.',
+      fields: [['xbar','Media muestral x̄',''],['sigma','Desviación estándar poblacional σ',''],['n','Tamaño de muestra n',''],['conf','Nivel de confianza (%)','95']],
+      run(V){
+        const xbar = needNum(V,'xbar','la media muestral'), sigma = needNum(V,'sigma','σ'), n = needNum(V,'n','n'), c = confOf(V);
+        must(sigma > 0, 'σ debe ser mayor que 0.'); must(n >= 1, 'n debe ser al menos 1.');
+        const r = ciMeanZ(xbar, sigma, n, c);
+        return { formula: ['IC = x̄ ± z(α/2) · σ/√n', 'α = 1 − ' + sig(c) + ' = ' + sig(1-c) + '   →   z(α/2) = ' + sig(r.z), 'E = z · σ/√n = ' + sig(r.z) + ' · ' + sig(sigma) + '/√' + sig(n) + ' = ' + sig(r.E), 'IC = ' + sig(xbar) + ' ± ' + sig(r.E)],
+          rows: [['Nivel de confianza', pctTxt(c)], ['Valor crítico z(α/2)', sig(r.z)], ['Error estándar σ/√n', sig(r.se)], ['Margen de error E', sig(r.E)], ['Límite inferior', sig(r.lo)], ['Límite superior', sig(r.hi)], ['Intervalo', '<b>(' + sig(r.lo) + ' ; ' + sig(r.hi) + ')</b>']] };
+      } },
+    ci_t: { group: 'ic', label: 'Intervalo de confianza para la media (σ desconocida, t)', list: true,
+      help: 'Se usa con la desviación estándar muestral s. Fórmula: x̄ ± t(α/2, n−1)·s/√n, con gl = n − 1.',
+      fields: [['xbar','Media muestral x̄',''],['s','Desviación estándar muestral s',''],['n','Tamaño de muestra n',''],['conf','Nivel de confianza (%)','95']],
+      run(V){
+        const xbar = needNum(V,'xbar','la media muestral'), s = needNum(V,'s','s'), n = needNum(V,'n','n'), c = confOf(V);
+        must(s >= 0, 's no puede ser negativa.'); must(n >= 2, 'Para t se necesita n ≥ 2.');
+        const r = ciMeanT(xbar, s, n, c);
+        return { formula: ['IC = x̄ ± t(α/2, gl) · s/√n', 'gl = n − 1 = ' + sig(n) + ' − 1 = ' + sig(r.df), 'α = ' + sig(1-c) + '   →   t(α/2, ' + sig(r.df) + ') = ' + sig(r.t), 'E = t · s/√n = ' + sig(r.t) + ' · ' + sig(s) + '/√' + sig(n) + ' = ' + sig(r.E), 'IC = ' + sig(xbar) + ' ± ' + sig(r.E)],
+          rows: [['Nivel de confianza', pctTxt(c)], ['Grados de libertad (gl)', sig(r.df)], ['Valor crítico t(α/2, gl)', sig(r.t)], ['Error estándar s/√n', sig(r.se)], ['Margen de error E', sig(r.E)], ['Límite inferior', sig(r.lo)], ['Límite superior', sig(r.hi)], ['Intervalo', '<b>(' + sig(r.lo) + ' ; ' + sig(r.hi) + ')</b>']] };
+      } },
+    ci_p: { group: 'ic', label: 'Intervalo de confianza para una proporción',
+      help: 'Llena los éxitos x y n, o directamente la proporción muestral p̂ y n. Fórmula: p̂ ± z(α/2)·√(p̂(1−p̂)/n). También se muestra el intervalo de Wilson.',
+      fields: [['x','Número de éxitos x',''],['phat','o proporción muestral p̂ (0 a 1)',''],['n','Tamaño de muestra n',''],['conf','Nivel de confianza (%)','95']],
+      run(V){
+        const n = needNum(V,'n','n'), c = confOf(V); let x = V('x'); const ph = V('phat');
+        must(n >= 1, 'n debe ser al menos 1.'); must(x != null || ph != null, 'Llena el número de éxitos x o la proporción p̂.');
+        if(x == null) x = ph*n;
+        must(x >= 0 && x <= n, 'Los éxitos x deben estar entre 0 y n.');
+        const r = ciProp(x, n, c), clip = v => Math.min(1, Math.max(0, v));
+        const notes = [];
+        if(n*r.p < 5 || n*(1-r.p) < 5) notes.push('n·p̂ o n·(1−p̂) es menor que 5: la aproximación normal es débil; prefiere el intervalo de Wilson.');
+        if(r.lo < 0 || r.hi > 1) notes.push('El intervalo clásico se recortó a [0, 1].');
+        return { formula: ['IC = p̂ ± z(α/2) · √(p̂(1−p̂)/n)', 'p̂ = x/n = ' + sig(x) + '/' + sig(n) + ' = ' + sig(r.p), 'z(α/2) = ' + sig(r.z) + '   (α = ' + sig(1-c) + ')', 'E = ' + sig(r.z) + ' · √(' + sig(r.p) + '·' + sig(1-r.p) + '/' + sig(n) + ') = ' + sig(r.E)],
+          rows: [['Proporción muestral p̂', sig(r.p)], ['Nivel de confianza', pctTxt(c)], ['Valor crítico z(α/2)', sig(r.z)], ['Error estándar', sig(r.se)], ['Margen de error E', sig(r.E)], ['Intervalo clásico (Wald)', '<b>(' + sig(clip(r.lo)) + ' ; ' + sig(clip(r.hi)) + ')</b>'], ['Intervalo de Wilson', '(' + sig(r.wLo) + ' ; ' + sig(r.wHi) + ')']], notes };
+      } },
+    n_mean: { group: 'n', label: 'Tamaño de muestra para estimar una media',
+      help: 'Fórmula: n = (z(α/2)·σ / E)², redondeado hacia arriba. E es el error máximo permitido.',
+      fields: [['sigma','Desviación estándar σ',''],['E','Error máximo E',''],['conf','Nivel de confianza (%)','95']],
+      run(V){
+        const sigma = needNum(V,'sigma','σ'), E = needNum(V,'E','el error máximo E'), c = confOf(V);
+        must(sigma > 0 && E > 0, 'σ y E deben ser mayores que 0.');
+        const r = sampleSizeMean(sigma, E, c);
+        return { formula: ['n = (z(α/2) · σ / E)²', 'n = (' + sig(r.z) + ' · ' + sig(sigma) + ' / ' + sig(E) + ')² = ' + sig(r.n)], rows: [['Valor crítico z(α/2)', sig(r.z)], ['n calculado', sig(r.n)], ['Tamaño de muestra necesario', '<b>' + r.nCeil + '</b>']] };
+      } },
+    n_prop: { group: 'n', label: 'Tamaño de muestra para estimar una proporción',
+      help: 'Fórmula: n = z(α/2)²·p(1−p) / E², redondeado hacia arriba. Si no tienes una estimación de p, usa 0.5 (el caso más exigente).',
+      fields: [['E','Error máximo E (por ejemplo 0.03)',''],['p','Proporción estimada p','0.5'],['conf','Nivel de confianza (%)','95']],
+      run(V){
+        const E = needNum(V,'E','el error máximo E'), p = needNum(V,'p','la proporción p'), c = confOf(V);
+        must(E > 0 && E < 1, 'E debe estar entre 0 y 1 (por ejemplo 0.03 para ±3 %).'); must(p >= 0 && p <= 1, 'p debe estar entre 0 y 1.');
+        const r = sampleSizeProp(p, E, c);
+        return { formula: ['n = z(α/2)² · p(1−p) / E²', 'n = ' + sig(r.z) + '² · ' + sig(p) + '·' + sig(1-p) + ' / ' + sig(E) + '² = ' + sig(r.n)], rows: [['Valor crítico z(α/2)', sig(r.z)], ['n calculado', sig(r.n)], ['Tamaño de muestra necesario', '<b>' + r.nCeil + '</b>']] };
+      } },
+    z_val: { group: 'z', label: 'Valor Z y probabilidad acumulada (normal)',
+      help: 'Estandariza un valor: z = (x − μ)/σ. Si das n, se trata de una media muestral: z = (x̄ − μ)/(σ/√n).',
+      fields: [['x','Valor x (o media muestral x̄)',''],['mu','Media μ',''],['sigma','Desviación estándar σ',''],['n','Tamaño de muestra n (opcional)','']],
+      run(V){
+        const x = needNum(V,'x','el valor x'), mu = needNum(V,'mu','μ'), sigma = needNum(V,'sigma','σ'), n = V('n');
+        must(sigma > 0, 'σ debe ser mayor que 0.'); if(n != null) must(n >= 1, 'n debe ser al menos 1.');
+        const se = n != null ? sigma/Math.sqrt(n) : sigma, z = (x-mu)/se;
+        return { formula: [n != null ? 'z = (x̄ − μ) / (σ/√n)' : 'z = (x − μ) / σ', 'z = (' + sig(x) + ' − ' + sig(mu) + ') / ' + (n != null ? '(' + sig(sigma) + '/√' + sig(n) + ')' : sig(sigma)) + ' = ' + sig(z)],
+          rows: [['Valor z', '<b>' + sig(z) + '</b>'], ['P(Z ≤ z)  acumulada', sig(normLower(z))], ['P(Z ≥ z)  cola derecha', sig(normUpper(z))], ['P(|Z| ≥ |z|)  dos colas', sig(Math.min(1, 2*normUpper(Math.abs(z))))], ['P(0 ≤ Z ≤ |z|)  entre la media y z', sig(Math.abs(normLower(z) - 0.5))]] };
+      } },
+    z_inv: { group: 'z', label: 'Z crítico (desde probabilidad, confianza o α)',
+      help: 'Llena UNO: la probabilidad acumulada p = P(Z ≤ z), el nivel de confianza (%), o el nivel de significancia α.',
+      fields: [['p','Probabilidad acumulada p (0 a 1)',''],['conf','o nivel de confianza (%)',''],['alpha','o nivel de significancia α','']],
+      run(V){
+        const p = V('p'), cf = V('conf'), al = V('alpha');
+        must([p, cf, al].filter(x => x != null).length === 1, 'Llena solo uno de los tres campos.');
+        if(p != null){ must(p > 0 && p < 1, 'p debe estar entre 0 y 1.'); const z = normInv(p); return { formula: ['z tal que P(Z ≤ z) = ' + sig(p)], rows: [['Valor z', '<b>' + sig(z) + '</b>'], ['P(Z ≥ z)', sig(1-p)]] }; }
+        if(cf != null){ const c = lvl(cf); must(c > 0 && c < 1, 'El nivel de confianza debe estar entre 0 y 100 %.'); const z = normInv(1-(1-c)/2); return { formula: ['α = 1 − ' + sig(c) + ' = ' + sig(1-c), 'z(α/2) tal que P(Z ≤ z) = 1 − α/2 = ' + sig(1-(1-c)/2)], rows: [['Nivel de confianza', pctTxt(c)], ['α', sig(1-c)], ['Z crítico z(α/2) (dos colas, ±)', '<b>±' + sig(z) + '</b>'], ['Z crítico z(α) (una cola)', sig(normInv(c))]] }; }
+        const a = lvl(al); must(a > 0 && a < 1, 'α debe estar entre 0 y 1.');
+        return { formula: ['z(α) con P(Z ≥ z) = α   y   z(α/2) con P(Z ≥ z) = α/2'], rows: [['α', sig(a)], ['z(α)  una cola', '<b>' + sig(normInv(1-a)) + '</b>'], ['z(α/2)  dos colas (±)', '<b>±' + sig(normInv(1-a/2)) + '</b>'], ['Nivel de confianza correspondiente', pctTxt(1-a)]] };
+      } },
+    t_val: { group: 'z', label: 'Valor t, grados de libertad y probabilidad acumulada', list: true,
+      help: 'Con una muestra: t = (x̄ − μ₀)/(s/√n), gl = n − 1. O bien escribe directamente un valor t y sus gl para obtener probabilidades.',
+      fields: [['xbar','Media muestral x̄',''],['mu0','Media hipotética μ₀',''],['s','Desviación estándar muestral s',''],['n','Tamaño de muestra n',''],['t','o valor t directo',''],['df','y grados de libertad gl (con t directo)','']],
+      run(V){
+        let t = V('t'), df = V('df'); const notes = []; let formula;
+        if(t == null){
+          const xbar = needNum(V,'xbar','x̄'), mu0 = needNum(V,'mu0','μ₀'), s = needNum(V,'s','s'), n = needNum(V,'n','n');
+          must(s > 0, 's debe ser mayor que 0.'); must(n >= 2, 'n debe ser al menos 2.');
+          df = n-1; t = (xbar-mu0)/(s/Math.sqrt(n));
+          formula = ['t = (x̄ − μ₀) / (s/√n)', 't = (' + sig(xbar) + ' − ' + sig(mu0) + ') / (' + sig(s) + '/√' + sig(n) + ') = ' + sig(t), 'gl = n − 1 = ' + sig(df)];
+        } else {
+          must(df != null && df > 0, 'Con un valor t directo debes indicar los grados de libertad (gl).');
+          formula = ['Distribución t de Student con gl = ' + sig(df)];
+        }
+        return { formula, rows: [['Valor t', '<b>' + sig(t) + '</b>'], ['Grados de libertad (gl)', sig(df)], ['P(T ≤ t)  acumulada', sig(tLower(t, df))], ['P(T ≥ t)  cola derecha', sig(tUpper(t, df))], ['P(|T| ≥ |t|)  dos colas', sig(Math.min(1, 2*tUpper(Math.abs(t), df)))]], notes };
+      } },
+    t_inv: { group: 'z', label: 'T crítico (desde gl y probabilidad, confianza o α)',
+      help: 'Indica los grados de libertad y llena UNO: probabilidad acumulada p, nivel de confianza (%) o nivel de significancia α.',
+      fields: [['df','Grados de libertad gl',''],['p','Probabilidad acumulada p (0 a 1)',''],['conf','o nivel de confianza (%)',''],['alpha','o nivel de significancia α','']],
+      run(V){
+        const df = needNum(V,'df','los grados de libertad'), p = V('p'), cf = V('conf'), al = V('alpha');
+        must(df > 0, 'Los grados de libertad deben ser mayores que 0.');
+        must([p, cf, al].filter(x => x != null).length === 1, 'Llena solo uno: p, nivel de confianza o α.');
+        if(p != null){ must(p > 0 && p < 1, 'p debe estar entre 0 y 1.'); return { formula: ['t tal que P(T ≤ t) = ' + sig(p) + ', gl = ' + sig(df)], rows: [['Valor t', '<b>' + sig(tInv(p, df)) + '</b>'], ['Grados de libertad (gl)', sig(df)]] }; }
+        const a = cf != null ? 1 - lvl(cf) : lvl(al); must(a > 0 && a < 1, 'El nivel debe estar entre 0 y 100 % (o α entre 0 y 1).');
+        return { formula: ['t(α/2, gl) con P(T ≥ t) = α/2   y   t(α, gl) con P(T ≥ t) = α', 'α = ' + sig(a) + ',  gl = ' + sig(df)], rows: [['α', sig(a)], ['Grados de libertad (gl)', sig(df)], ['t(α/2, gl)  dos colas (±)', '<b>±' + sig(tInv(1-a/2, df)) + '</b>'], ['t(α, gl)  una cola', '<b>' + sig(tInv(1-a, df)) + '</b>']] };
+      } },
+    test_z: { group: 'h', label: 'Prueba de hipótesis para la media (σ conocida, Z)', list: true,
+      help: 'H₀: μ = μ₀. Estadístico: z = (x̄ − μ₀)/(σ/√n). Se rechaza H₀ si el valor p es menor o igual que α.',
+      fields: [['xbar','Media muestral x̄',''],['mu0','Media hipotética μ₀',''],['sigma','Desviación estándar poblacional σ',''],['n','Tamaño de muestra n',''],['alpha','Nivel de significancia α','0.05'],TAILF],
+      run(V, S){
+        const xbar = needNum(V,'xbar','x̄'), mu0 = needNum(V,'mu0','μ₀'), sigma = needNum(V,'sigma','σ'), n = needNum(V,'n','n'), a = alphaOf(V), tail = S('tail') || 'two';
+        must(sigma > 0 && n >= 1, 'σ debe ser mayor que 0 y n al menos 1.');
+        const z = (xbar-mu0)/(sigma/Math.sqrt(n)), p = pvalZ(z, tail), crit = critZ(a, tail);
+        return { formula: ['z = (x̄ − μ₀) / (σ/√n) = (' + sig(xbar) + ' − ' + sig(mu0) + ') / (' + sig(sigma) + '/√' + sig(n) + ') = ' + sig(z), 'Región de rechazo: ' + tailInfo[tail].zone],
+          rows: hypRows('μ', z, 'Estadístico z', crit, p, a, tail, { null0: sig(mu0) }), notes: [hypConclusion(p <= a, a)] };
+      } },
+    test_t: { group: 'h', label: 'Prueba de hipótesis para la media (σ desconocida, t)', list: true,
+      help: 'H₀: μ = μ₀. Estadístico: t = (x̄ − μ₀)/(s/√n) con gl = n − 1. Se rechaza H₀ si el valor p es menor o igual que α.',
+      fields: [['xbar','Media muestral x̄',''],['mu0','Media hipotética μ₀',''],['s','Desviación estándar muestral s',''],['n','Tamaño de muestra n',''],['alpha','Nivel de significancia α','0.05'],TAILF],
+      run(V, S){
+        const xbar = needNum(V,'xbar','x̄'), mu0 = needNum(V,'mu0','μ₀'), s = needNum(V,'s','s'), n = needNum(V,'n','n'), a = alphaOf(V), tail = S('tail') || 'two';
+        must(s > 0, 's debe ser mayor que 0.'); must(n >= 2, 'n debe ser al menos 2.');
+        const df = n-1, t = (xbar-mu0)/(s/Math.sqrt(n)), p = pvalT(t, df, tail), crit = critT(a, df, tail);
+        return { formula: ['t = (x̄ − μ₀) / (s/√n) = (' + sig(xbar) + ' − ' + sig(mu0) + ') / (' + sig(s) + '/√' + sig(n) + ') = ' + sig(t), 'gl = n − 1 = ' + sig(df), 'Región de rechazo: ' + tailInfo[tail].zone],
+          rows: hypRows('μ', t, 'Estadístico t', crit, p, a, tail, { null0: sig(mu0), df }), notes: [hypConclusion(p <= a, a)] };
+      } },
+    test_p: { group: 'h', label: 'Prueba de hipótesis para una proporción (Z)',
+      help: 'H₀: p = p₀. Estadístico: z = (p̂ − p₀)/√(p₀(1−p₀)/n). Llena x (éxitos) o p̂, y n.',
+      fields: [['x','Número de éxitos x',''],['phat','o proporción muestral p̂',''],['n','Tamaño de muestra n',''],['p0','Proporción hipotética p₀',''],['alpha','Nivel de significancia α','0.05'],TAILF],
+      run(V, S){
+        const n = needNum(V,'n','n'), p0 = needNum(V,'p0','p₀'), a = alphaOf(V), tail = S('tail') || 'two'; let x = V('x'); const ph = V('phat');
+        must(n >= 1, 'n debe ser al menos 1.'); must(p0 > 0 && p0 < 1, 'p₀ debe estar entre 0 y 1 (sin incluirlos).'); must(x != null || ph != null, 'Llena x o p̂.');
+        const phat = x != null ? x/n : ph; must(phat >= 0 && phat <= 1, 'La proporción muestral debe estar entre 0 y 1.');
+        const se = Math.sqrt(p0*(1-p0)/n), z = (phat-p0)/se, p = pvalZ(z, tail), crit = critZ(a, tail), notes = [hypConclusion(p <= a, a)];
+        if(n*p0 < 5 || n*(1-p0) < 5) notes.push('n·p₀ o n·(1−p₀) es menor que 5: la aproximación normal es débil.');
+        return { formula: ['p̂ = ' + sig(phat), 'z = (p̂ − p₀) / √(p₀(1−p₀)/n) = (' + sig(phat) + ' − ' + sig(p0) + ') / ' + sig(se) + ' = ' + sig(z), 'Región de rechazo: ' + tailInfo[tail].zone],
+          rows: hypRows('p', z, 'Estadístico z', crit, p, a, tail, { null0: sig(p0) }), notes };
+      } },
+    df: { group: 'g', label: 'Grados de libertad',
+      help: 'Una muestra: gl = n − 1. Dos muestras independientes: gl = n₁ + n₂ − 2 (varianzas iguales) o la fórmula de Welch (varianzas distintas, necesita s₁ y s₂).',
+      fields: [['n','Una muestra: n',''],['n1','Muestra 1: n₁',''],['s1','Muestra 1: s₁',''],['n2','Muestra 2: n₂',''],['s2','Muestra 2: s₂','']],
+      run(V){
+        const n = V('n'), n1 = V('n1'), n2 = V('n2'), s1 = V('s1'), s2 = V('s2'), rows = [], formula = [];
+        if(n != null){ must(n >= 2, 'n debe ser al menos 2.'); rows.push(['Una muestra: gl = n − 1', '<b>' + sig(n-1) + '</b>']); formula.push('gl = n − 1 = ' + sig(n) + ' − 1 = ' + sig(n-1)); }
+        if(n1 != null && n2 != null){
+          must(n1 >= 2 && n2 >= 2, 'n₁ y n₂ deben ser al menos 2.');
+          rows.push(['Dos muestras (varianzas iguales): gl = n₁ + n₂ − 2', '<b>' + sig(n1+n2-2) + '</b>']); formula.push('gl = n₁ + n₂ − 2 = ' + sig(n1) + ' + ' + sig(n2) + ' − 2 = ' + sig(n1+n2-2));
+          if(s1 != null && s2 != null){
+            must(s1 > 0 && s2 > 0, 's₁ y s₂ deben ser mayores que 0.');
+            const w = welchDf(s1, n1, s2, n2);
+            rows.push(['Dos muestras (Welch)', '<b>' + sig(w) + '</b>']);
+            formula.push('gl(Welch) = (s₁²/n₁ + s₂²/n₂)² / [ (s₁²/n₁)²/(n₁−1) + (s₂²/n₂)²/(n₂−1) ] = ' + sig(w));
+          }
+        }
+        must(rows.length > 0, 'Llena n (una muestra) o n₁ y n₂ (dos muestras).');
+        return { formula, rows };
+      } }
+  };
+  const infMode = document.getElementById('infMode');
+  const infV = k => numOrNull('inf_' + k), infS = k => document.getElementById('inf_' + k).value;
+  function infRender(){
+    const m = INF[infMode.value || 'ci_z'];
+    document.getElementById('infHelp').textContent = m.help;
+    document.getElementById('infFields').innerHTML = dynFieldsHtml('inf_', m.fields);
+    document.getElementById('btnInfList').style.display = m.list ? '' : 'none';
+    document.getElementById('infResult').innerHTML = '';
+  }
+  infMode.addEventListener('change', infRender); infRender();
+  document.getElementById('btnInf').addEventListener('click', () => {
+    const out = document.getElementById('infResult');
+    try { out.innerHTML = renderCalc(INF[infMode.value || 'ci_z'].run(infV, infS)); } catch(e){ chemErr(out, e); }
+  });
+  document.getElementById('btnInfList').addEventListener('click', () => {
+    const out = document.getElementById('infResult');
+    if(statsData.length < 2){ out.innerHTML = '<span class="chem-error">Primero escribe al menos 2 datos en la sub-pestaña Descriptiva.</span>'; return; }
+    const n = statsData.length, mean = statsData.reduce((a, b) => a + b, 0)/n;
+    const s = Math.sqrt(statsData.reduce((a, b) => a + (b-mean)*(b-mean), 0)/(n-1));
+    [['n', n], ['xbar', mean], ['s', s]].forEach(([k, v]) => { const el2 = document.getElementById('inf_' + k); if(el2) el2.value = String(Number(v.toPrecision(12))); });
+    out.innerHTML = '<div class="stat-note" style="padding:0; color:var(--accent);">Se cargaron desde tu lista: n = ' + n + ', x̄ = ' + sig(mean) + ', s = ' + sig(s) + '. Completa los demás datos y pulsa «Calcular».</div>';
   });
 
 

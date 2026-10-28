@@ -1,7 +1,7 @@
 {
   "name": "Calculadora Científica",
   "short_name": "Calculadora",
-  "description": "Calculadora científica con estadística, gráficas, conversiones, química, matemáticas, física y topografía. Funciona sin conexión.",
+  "description": "Calculadora científica con estadística (descriptiva, distribuciones e inferencia), gráficas, conversiones, química, matemáticas, física y topografía. Funciona sin conexión.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calculadora-v6';
+const CACHE_NAME = 'calculadora-v7';
 const FILES_TO_CACHE = ['./index.html','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(FILES_TO_CACHE))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))); self.clients.claim(); });
